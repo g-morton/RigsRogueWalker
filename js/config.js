@@ -1,0 +1,82 @@
+export const CONFIG = {
+  COLORS: {
+    BG: '#ffffff',
+    INK: '#000000',
+    ACCENT: '#e01a1a'
+  },
+  CANVAS: {
+    W: 1024,
+    H: 768
+  },
+  SCROLL: {
+    BASE: 1.0  // pixels per frame baseline
+  },
+  TILE: {
+    H: 200,           // row height
+    GAP_MIN: 50,    // min gap between two corridors horizontally
+    GAP_MAX: 200,    // max gap
+    PATH_W_MIN: 300, // min corridor width
+    PATH_W_MAX: 800, // max corridor width
+    START_SAFE_ROWS: 3  // rows with full-width safe start
+  },
+  PLAYER: {
+    START_X: 0.5,  // fraction of screen width
+    START_Y: 0.90, // fraction of screen height
+    LEG_W: 13, LEG_H: 26, LEG_OFFSET_X: 20, LEG_OFFSET_Y: 10, LEG_LIFT_Y: 8,
+    TORSO_W: 40, TORSO_H: 26,
+    HEAD: 16, HEAD_BOB_X: 4,
+    HEAD_OFFSET_Y: -18,
+    BASE_STEP: 1.0, LEG_SPEED: 0.7, HEAD_BOB_SPEED: 0.5,
+    MOUNT_OFFSET_X: 30, MOUNT_OFFSET_Y: 4,
+    MOVE_PX: 2.0,
+    TWIST_DEG: 60,
+    SQUASH_R: 18
+  },
+  WEAPONS: {
+    rifle:   { cooldown: 0.18, muzzle:{x:6, y:-12} },
+    chaingun:{ cooldown: 0.08, muzzle:{x:0, y:-60} },
+    cannon:  { cooldown: 0.50, muzzle:{x:18,y:-2}  },
+    rocket:  { cooldown: 0.90, muzzle:{x:0, y:-18} }
+  },
+  PROJECTILES: {
+    rifle:    { speed: 420, life: 3, r: 3 },
+    chaingun: { speed: 520, life: 2, len: 18, w: 3 },
+    cannon:   { speed: 360, life: 2.0, r: 5 },
+    rocket: {
+      speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6,
+      ramp_sec: 0.6, accel_base: 0.2, accel_peak: 3.0,
+      trail_dt: 0.03, trail_len: 12, puff_r0: 2.0, puff_growth: 22, puff_fade: 1.6
+    }
+  },
+    IBS: {
+    SPAWN_ROWS: 2,     // spawn cadence (rows per wave) — lower = more often
+    PER_SPAWN: 3,      // how many IBS per wave
+    MAX: 30,           // soft cap on concurrent IBS
+    SEED: 6,          // how many to pre-seed above screen on start
+    R: 10,
+    SPEED_MIN: 0.1,
+    SPEED_MAX: 1.6,
+    TALK_CHANCE: 0.04,
+    TALK_TIME: 1.2,
+    ANIM: {
+        WALK_FREQ: 8.0,     // base step frequency (higher = faster swing)
+        SWAY_DEG:  8,       // max torso sway in degrees (scaled per IBS)
+        BOB_PX:    2.0      // vertical bob amplitude (px, scaled per IBS)
+        }
+    },
+  ENEMIES: {
+    TURRET: {
+      SPAWN_ROWS: 2,
+      SIZE: 18,
+      FIRE_COOLDOWN_MIN: 2,
+      FIRE_COOLDOWN_MAX: 4,
+      BULLET_SPEED: 100,
+      BULLET_LIFE: 8,
+      BULLET_R: 4.5
+    }
+  },
+  POWERUPS: {
+    RADIUS: 16,
+    EVERY_ROWS: 5
+  }
+};

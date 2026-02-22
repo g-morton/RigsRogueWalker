@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rigs Rogue Walker — Refactor 2</title>
+  <style>
+    html, body { margin:0; padding:0; background:#fff; color:#000; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    #hud { position:fixed; top:10px; left:10px; background:#000; color:#fff; padding:8px 10px; border-radius:8px; font-size:14px; }
+    #controls { position:fixed; top:10px; right:10px; }
+    #controls a { display:inline-block; padding:8px 12px; border-radius:8px; text-decoration:none; background:#000; color:#fff; margin-left:8px; }
+    canvas { display:block; width:100vw; height:100vh; }
+  </style>
+</head>
+<body>
+    <div id="hud">
+        Dist: <span id="scoreDist">0</span>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        IBS: <span id="scoreIBS">0</span>
+    </div>
+  <div id="controls">
+    <a href="#" id="restart">Start ▶</a>
+  </div>
+  <canvas id="game" width="1024" height="768"></canvas>
+
+  <script type="module">
+    import { boot, wireUI } from './js/game.js';
+    wireUI();
+    boot();
+  </script>
+</body>
+</html>
