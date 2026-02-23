@@ -37,6 +37,7 @@ function startRAF(){
     player.update(dt); player.draw(ctx);
     Projectiles.update(dt); Projectiles.draw(ctx);
     Particles.update(dt); Particles.draw(ctx);
+    IBS.drawBubbles?.(ctx);
 
     // fall check
     if (!Tiles.isSafe(player.x, player.y)){
@@ -82,6 +83,7 @@ export function boot(){
   Powerups.draw(ctx);
   Turrets.draw(ctx);
   player.draw(ctx);
+  IBS.drawBubbles?.(ctx);
 
   HUD.tick();
 }

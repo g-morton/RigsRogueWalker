@@ -299,54 +299,50 @@ drawIBS(g, p, r){
   g.stroke();
 
   g.restore();
+},
 
-  // Speech bubble (kept compatible with your existing p.talk)
-  if (p.talk){
-    g.save();
+drawIBSBubble(g, p, r){
+  if (!p.talk) return;
 
-    const txt = p.talk;
-    const paddingX = 10;
-    const paddingY = 6;
+  g.save();
 
-    g.font = '12px monospace';
-    const textW = g.measureText(txt).width;
-    const w = textW + paddingX * 2;
-    const h = 14 + paddingY * 2;
+  const txt = p.talk;
+  const paddingX = 10;
+  const paddingY = 6;
 
-    const bx = p.x - w/2;
-    const by = p.y - r*2.2 - h;
+  g.font = '12px monospace';
+  const textW = g.measureText(txt).width;
+  const w = textW + paddingX * 2;
+  const h = 14 + paddingY * 2;
 
-    const radius = 8;
+  const bx = p.x - w / 2;
+  const by = p.y - r * 2.2 - h;
+  const radius = 8;
 
-    // --- Rounded rectangle ---
-    g.beginPath();
-    g.moveTo(bx + radius, by);
-    g.lineTo(bx + w - radius, by);
-    g.quadraticCurveTo(bx + w, by, bx + w, by + radius);
-    g.lineTo(bx + w, by + h - radius);
-    g.quadraticCurveTo(bx + w, by + h, bx + w - radius, by + h);
-    g.lineTo(bx + radius, by + h);
-    g.quadraticCurveTo(bx, by + h, bx, by + h - radius);
-    g.lineTo(bx, by + radius);
-    g.quadraticCurveTo(bx, by, bx + radius, by);
-    g.closePath();
+  g.beginPath();
+  g.moveTo(bx + radius, by);
+  g.lineTo(bx + w - radius, by);
+  g.quadraticCurveTo(bx + w, by, bx + w, by + radius);
+  g.lineTo(bx + w, by + h - radius);
+  g.quadraticCurveTo(bx + w, by + h, bx + w - radius, by + h);
+  g.lineTo(bx + radius, by + h);
+  g.quadraticCurveTo(bx, by + h, bx, by + h - radius);
+  g.lineTo(bx, by + radius);
+  g.quadraticCurveTo(bx, by, bx + radius, by);
+  g.closePath();
 
-    g.fillStyle = CONFIG.COLORS.BG;
-    g.fill();
-    g.strokeStyle = INK;
-    g.lineWidth = 2;
-    g.stroke();
+  g.fillStyle = CONFIG.COLORS.BG;
+  g.fill();
+  g.strokeStyle = INK;
+  g.lineWidth = 2;
+  g.stroke();
 
-    // --- Text ---
-    g.fillStyle = INK;
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText(txt, p.x, by + h/2 + 1);
+  g.fillStyle = INK;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(txt, p.x, by + h / 2 + 1);
 
-    g.restore();
-  }
-
-
+  g.restore();
 },
 
 

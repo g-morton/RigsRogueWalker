@@ -195,4 +195,11 @@ export function draw(g){
   for (const p of ibs)   Theme.drawIBS(g, p, CONFIG.IBS.R);
 }
 
-export const IBS = { reset, update, draw };
+export function drawBubbles(g){
+  for (const p of ibs){
+    if (!p.talk) continue;
+    Theme.drawIBSBubble(g, p, CONFIG.IBS.R);
+  }
+}
+
+export const IBS = { reset, update, draw, drawBubbles };
