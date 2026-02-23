@@ -54,8 +54,9 @@ export function reset(){
 }
 
 export function update(dt){
+  const dy = world.dy;
   // Spawn cadence measured in scrolled pixels (matches Tiles behavior)
-  accPx += world.scroll;
+  accPx += dy;
   const spacingPx = CONFIG.TILE.H * CONFIG.ENEMIES.TURRET.SPAWN_ROWS;
   while (accPx >= spacingPx){
     accPx -= spacingPx;
@@ -65,7 +66,7 @@ export function update(dt){
   // Move turrets with world scroll + fire on cooldown
   for (let i = turrets.length - 1; i >= 0; i--){
     const t = turrets[i];
-    t.y += world.scroll;
+    t.y += dy;
 
     // cull off-screen
     if (t.y > world.h + CONFIG.ENEMIES.TURRET.SIZE + 20){

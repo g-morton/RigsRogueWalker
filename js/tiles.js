@@ -20,10 +20,10 @@ function newRow(y, full=false){
   rows.push({ y, h, corridors:[c1, c2] });
 }
 
-  function topMostY(){
-    // the last element has the smallest y (top-most) because we seed bottom→top
-    return rows.length ? rows[rows.length - 1].y : world.h;
-  }
+function topMostY(){
+  // the last element has the smallest y (top-most) because we seed bottom→top
+  return rows.length ? rows[rows.length - 1].y : world.h;
+}
 
 export const Tiles = {
   reset(){
@@ -39,9 +39,10 @@ export const Tiles = {
       y -= CONFIG.TILE.H;
     }
   },
-  update(){
+  update(dt){
     // scroll rows downward
-    for(const r of rows){ r.y += world.scroll; }
+    const dy = world.dy;
+    for(const r of rows){ r.y += dy; }
 
     // remove off-screen rows at bottom
     while (rows.length && rows[0].y - rows[0].h/2 > world.h + 4){

@@ -137,67 +137,216 @@ export const Theme = {
     }
   },
 
+// Replace ONLY Theme.drawIBS with this version
 drawIBS(g, p, r){
+  // Top-down “running stick person”
+  // Facing “north” (toward top of screen), with a subtle lean toward horizontal wander.
   const INK = CONFIG.COLORS.INK;
   const A   = CONFIG.IBS.ANIM;
 
-  // animation
   const phase = p.animT || 0;
-  const sway  = (A.SWAY_DEG * Math.PI/180) * Math.sin(phase) * (p.swayMul || 1);
-  const bob   = (A.BOB_PX * (p.bobMul || 1)) * Math.abs(Math.sin(phase));
-  const legSwing = Math.sin(phase) * (r * 0.35);
-  const armSwing = Math.sin(phase + Math.PI) * (r * 0.20);
 
-  // body radius (slightly larger for nicer overlap)
-  const R = r * 0.9;
+  // Stride: legs + arms alternate. Bob: small vertical bounce.
+  const stride = Math.sin(phase);
+  const lift   = Math.abs(stride);
+
+  const bob = (A.BOB_PX * (p.bobMul || 1)) * lift;
+
+  // Very small yaw toward wander direction (keeps it top-down, not side-on)
+  const yaw = (p.dir || 0) * 0.08;
+
+  // Proportions derived from radius
+  const headR = r * 0.32;
+  const chestY = r * 0.05;
+  const hipY  = r * 0.55;
+
+  const shoulderW = r * 0.55;
+  const hipW      = r * 0.45;
+
+  // limb reach
+  const armLen = r * 0.60;
+  const legLen = r * 0.70;
+
+  // limb angles (top-down: splayed V-shape)
+  const armSplay = 0.85;
+  const legSplay = 0.95;
+
+  // forward/back swing (subtle from top-down)
+  const armSwing = stride * r * 0.18;
+  const legSwing = stride * r * 0.26;
+
+  // line style
+  const lw = Math.max(1.5, r * 0.14);
 
   g.save();
   g.translate(p.x, p.y + bob);
-  g.rotate(sway);
+  g.rotate(yaw);
+
+  g.strokeStyle = INK;
+  g.lineWidth = lw;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
   g.fillStyle = INK;
 
-  // --- LEGS (draw first, tucked under body) ---
-  // anchor just below body center
-  const legY = R * 0.15;
-  const legW = r * 0.46;
-  const legH = r * 0.55;
-
-  // left leg (swings down when positive)
-  g.fillRect(-R*0.55, legY + Math.max(0,  legSwing), legW, legH);
-  // right leg
-  g.fillRect( R*0.10, legY + Math.max(0, -legSwing), legW, legH);
-
-  // --- BODY (on top of legs) ---
+  // Head slightly “ahead” to suggest facing up-screen
+  const headY = -r * 0.55;
   g.beginPath();
-  g.arc(0, 0, R * 0.8, 0, Math.PI*2);
+  g.arc(0, headY, headR, 0, Math.PI * 2);
   g.fill();
 
-  // --- ARMS (draw last so they’re visible) ---
-  // short outward “nubs” at sides
-  const armY = -R * 0.9;       // slightly above center
-  const armW = r * 0.30;
-  const armH = r * 0.56;
+  // Body spine
+  g.beginPath();
+  g.moveTo(0, headY + headR * 0.6);
+  g.lineTo(0, hipY);
+  g.stroke();
 
-  // left arm (tiny vertical swing)
-  g.fillRect(-R*1.10, armY + armSwing*0.12, armW, armH);
-  // right arm
-  g.fillRect( R*0.40,  armY - armSwing*0.12, armW, armH);
+  // Shoulders / hips bars (helps top-down readability)
+  g.beginPath();
+  g.moveTo(-shoulderW * 0.5, chestY);
+  g.lineTo( shoulderW * 0.5, chestY);
+  g.stroke();
+
+  g.beginPath();
+  g.moveTo(-hipW * 0.5, hipY);
+  g.lineTo( hipW * 0.5, hipY);
+  g.stroke();
+
+  // Arms (PANIC MODE — longer, wider, slower, more flail)
+
+  const lShoulder = { x: -shoulderW * 0.5, y: chestY };
+  const rShoulder = { x:  shoulderW * 0.5, y: chestY };
+
+  // Slower base wave (closer to run speed)
+  const baseWave = Math.sin(phase * 1.2);
+
+  // Small personality offset so they don’t sync
+  const jitter = Math.sin(phase * 2.1 + (p.x * 0.03)) * 0.4;
+
+  const wave = baseWave + jitter;
+
+  // Arms lifted up in panic
+  const armLift = -r * 0.45;
+
+  // Much wider lateral swing
+  const lateralSwing = wave * r * 0.55;
+
+  // Vertical waving (not too fast)
+  const verticalSwing = wave * r * 0.35;
+
+  const lHand = {
+    x: lShoulder.x - armLen * 0.6 + lateralSwing,
+    y: lShoulder.y + armLift + verticalSwing
+  };
+
+  const rHand = {
+    x: rShoulder.x + armLen * 0.6 - lateralSwing,
+    y: rShoulder.y + armLift - verticalSwing
+  };
+
+  // Elbow bend to keep them from looking rigid
+  const lElbow = {
+    x: (lShoulder.x + lHand.x) * 0.5 - r * 0.25,
+    y: (lShoulder.y + lHand.y) * 0.5
+  };
+
+  const rElbow = {
+    x: (rShoulder.x + rHand.x) * 0.5 + r * 0.25,
+    y: (rShoulder.y + rHand.y) * 0.5
+  };
+
+  g.beginPath();
+  g.moveTo(lShoulder.x, lShoulder.y);
+  g.lineTo(lElbow.x, lElbow.y);
+  g.lineTo(lHand.x, lHand.y);
+
+  g.moveTo(rShoulder.x, rShoulder.y);
+  g.lineTo(rElbow.x, rElbow.y);
+  g.lineTo(rHand.x, rHand.y);
+  g.stroke();
+
+
+
+  // Legs (running V)
+  const lHip = { x: -hipW * 0.5, y: hipY };
+  const rHip = { x:  hipW * 0.5, y: hipY };
+
+  const lLegF =  legSwing;
+  const rLegF = -legSwing;
+
+  const lFoot = {
+    x: lHip.x - Math.cos(legSplay) * legLen,
+    y: lHip.y + Math.sin(legSplay) * legLen + lLegF
+  };
+  const rFoot = {
+    x: rHip.x + Math.cos(legSplay) * legLen,
+    y: rHip.y + Math.sin(legSplay) * legLen + rLegF
+  };
+
+  g.beginPath();
+  g.moveTo(lHip.x, lHip.y);
+  g.lineTo(lFoot.x, lFoot.y);
+  g.moveTo(rHip.x, rHip.y);
+  g.lineTo(rFoot.x, rFoot.y);
+  g.stroke();
+
+  // Tiny foot taps
+  const footW = r * 0.14;
+  g.beginPath();
+  g.moveTo(lFoot.x - footW, lFoot.y);
+  g.lineTo(lFoot.x + footW, lFoot.y);
+  g.moveTo(rFoot.x - footW, rFoot.y);
+  g.lineTo(rFoot.x + footW, rFoot.y);
+  g.stroke();
 
   g.restore();
 
-  // Optional speech bubble (unchanged)
+  // Speech bubble (kept compatible with your existing p.talk)
   if (p.talk){
     g.save();
+
+    const txt = p.talk;
+    const paddingX = 10;
+    const paddingY = 6;
+
+    g.font = '12px monospace';
+    const textW = g.measureText(txt).width;
+    const w = textW + paddingX * 2;
+    const h = 14 + paddingY * 2;
+
+    const bx = p.x - w/2;
+    const by = p.y - r*2.2 - h;
+
+    const radius = 8;
+
+    // --- Rounded rectangle ---
+    g.beginPath();
+    g.moveTo(bx + radius, by);
+    g.lineTo(bx + w - radius, by);
+    g.quadraticCurveTo(bx + w, by, bx + w, by + radius);
+    g.lineTo(bx + w, by + h - radius);
+    g.quadraticCurveTo(bx + w, by + h, bx + w - radius, by + h);
+    g.lineTo(bx + radius, by + h);
+    g.quadraticCurveTo(bx, by + h, bx, by + h - radius);
+    g.lineTo(bx, by + radius);
+    g.quadraticCurveTo(bx, by, bx + radius, by);
+    g.closePath();
+
     g.fillStyle = CONFIG.COLORS.BG;
-    g.strokeStyle = INK; g.lineWidth = 2;
-    const txt = p.talk, pad = 6, w = Math.max(36, txt.length*7), h = 18;
-    g.fillRect(p.x - w/2, p.y - r*2.1 - h, w, h);
-    g.strokeRect(p.x - w/2, p.y - r*2.1 - h, w, h);
-    g.fillStyle = INK; g.font = '12px monospace';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(txt, p.x, p.y - r*2.1 - h/2);
+    g.fill();
+    g.strokeStyle = INK;
+    g.lineWidth = 2;
+    g.stroke();
+
+    // --- Text ---
+    g.fillStyle = INK;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(txt, p.x, by + h/2 + 1);
+
     g.restore();
   }
+
+
 },
 
 

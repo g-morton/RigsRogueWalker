@@ -11,8 +11,13 @@ export const world = {
   h: canvas.height,
   running: false,
   dist: 0,
-  scroll: CONFIG.SCROLL.BASE,
-  player: null
+  // Scroll speed in px/s (see CONFIG.SCROLL.PX_PER_SEC)
+  scroll: CONFIG.SCROLL.PX_PER_SEC,
+  // Per-frame scroll delta in px (computed each frame by the game loop)
+  dy: 0,
+  player: null,
+  // HUD counters (read by hud.js)
+  ibsHit: 0
 };
 
 export function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }

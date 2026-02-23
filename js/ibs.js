@@ -14,8 +14,8 @@ let accPx = 0;
 
 // Flavor lines (optional bubble)
 const LINES = [
-  "Don't shoot!","Wrong way!","Why me?!",
-  "Yikes!","Run!!","Watch it!","Mind the gap!","I'm innocent!"
+  "Don't shoot","I'm too young","Why me?", "Think of the children", "Are you crazy?",
+  "Yikes","Run","Watch out","Mind the gap","I'm innocent", "Help", "Why oh why?"
 ];
 
 // ---------------------------------------------------------------------------
@@ -58,6 +58,7 @@ function spawnOne(forcedY = null){
       const talk  = Math.random() < cfg.TALK_CHANCE ? LINES[(Math.random()*LINES.length)|0] : null;
       ibs.push({
         x, y, vx: speed, dir, t:0, talk, talkT:0,
+        talkCD: 0,
         animT: 0,
         swayMul: 0.7 + Math.random()*0.8, // 0.7–1.5x
         bobMul:  0.7 + Math.random()*1.0  // 0.7–1.7x
@@ -68,7 +69,7 @@ function spawnOne(forcedY = null){
   // fallback
   const speed = rand(cfg.SPEED_MIN, cfg.SPEED_MAX);
   ibs.push({
-    x: world.w/2, y, vx: speed, dir:(Math.random()<0.5?-1:1), t:0, talk:null, talkT:0,
+    x: world.w/2, y, vx: speed, dir:(Math.random()<0.5?-1:1), t:0, talk:null, talkT:0, talkCD: 0,
     animT: 0, swayMul: 0.7 + Math.random()*0.8, bobMul: 0.7 + Math.random()*1.0
   });
 }
@@ -94,8 +95,11 @@ export function reset(){
 export function update(dt){
   const cfg = CONFIG.IBS;
 
+  // how much the world moved this frame
+  const dy = world.dy;
+
   // Spawn cadence by scrolled pixels (waves)
-  accPx += world.scroll;
+  accPx += dy;
   const spacingPx = CONFIG.TILE.H * cfg.SPAWN_ROWS;
   while (accPx >= spacingPx){
     accPx -= spacingPx;
@@ -105,7 +109,7 @@ export function update(dt){
   // Gentle top-up toward MAX
   if (ibs.length < (cfg.MAX|0)){
     const deficit = (cfg.MAX|0) - ibs.length;
-    const p = Math.min(0.9, (deficit / Math.max(1, cfg.MAX)) * (world.scroll / CONFIG.TILE.H) * 4.0);
+    const p = Math.min(0.9, (deficit / Math.max(1, cfg.MAX)) * (dy / CONFIG.TILE.H) * 4.0);
     if (Math.random() < p) spawnOne();
   }
 
@@ -113,7 +117,7 @@ export function update(dt){
   for (let i = ibs.length - 1; i >= 0; i--){
     const p = ibs[i];
     p.t += dt;
-    p.y += world.scroll;
+    p.y += dy;
 
     // advance anim time (scale with speed so faster walkers swing more)
     p.animT += dt * (CONFIG.IBS.ANIM.WALK_FREQ * (0.6 + p.vx));
@@ -128,6 +132,19 @@ export function update(dt){
       if (p.talkT > cfg.TALK_TIME) p.talk = null;
     }
 
+    // --- Cooldown countdown ---
+    p.talkCD = Math.max(0, (p.talkCD || 0) - dt);
+
+    // --- Panic chatter trigger (starts new bubble) ---
+    if (!p.talk && p.talkCD <= 0){
+      const density = (CONFIG.IBS.TALK_DENSITY ?? 0);
+      if (density > 0 && Math.random() < density * dt){
+        p.talk = LINES[(Math.random()*LINES.length)|0];
+        p.talkT = 0;
+        p.talkCD = (CONFIG.IBS.TALK_COOLDOWN ?? 2.0);
+      }
+    }
+
     // offscreen cull
     if (p.y > world.h + 30){ ibs.splice(i,1); continue; }
 
@@ -137,7 +154,6 @@ export function update(dt){
       splats.push(makeSplat(p.x, p.y));
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
-      const el1 = document.getElementById('scoreIBS'); if (el1) el1.textContent = world.ibsHit;
       continue;
     }
 
@@ -153,7 +169,6 @@ export function update(dt){
     if (gotHit){
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
-      const el2 = document.getElementById('scoreIBS'); if (el2) el2.textContent = world.ibsHit;
       continue;
     }
   }
@@ -162,9 +177,6 @@ export function update(dt){
   for (let i = splats.length - 1; i >= 0; i--){
     const s = splats[i];
     s.t += dt;
-
-    // how much the world moved this frame
-    const dy = world.scroll;
 
     // move center & all blobs together so splat rides with ground
     s.scrollY += dy;

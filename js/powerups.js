@@ -39,14 +39,15 @@ function spawnOne(){
 export function reset(){ items.length = 0; accPx = 0; }
 
 export function update(dt){
+  const dy = world.dy;
   // accumulate pixel scroll like tiles
-  accPx += world.scroll;
+  accPx += dy;
   const spacingPx = CONFIG.TILE.H * CONFIG.POWERUPS.EVERY_ROWS;
   while (accPx >= spacingPx){
     accPx -= spacingPx;
     spawnOne();
   }
-  for(const it of items) it.y += world.scroll;
+  for(const it of items) it.y += dy;
 
   const p = world.player;
   if (p){

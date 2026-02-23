@@ -23,7 +23,7 @@ export class Player{
   }
 
   update(dt){
-    const sp = CONFIG.PLAYER.MOVE_PX * this.speedMul;
+    const sp = (CONFIG.PLAYER.MOVE_PX_PER_SEC * this.speedMul) * dt;
     if (keys.has('ArrowLeft')) this.x -= sp;
     if (keys.has('ArrowRight')) this.x += sp;
     if (keys.has('ArrowUp')) this.y -= sp;

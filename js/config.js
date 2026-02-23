@@ -9,7 +9,12 @@ export const CONFIG = {
     H: 768
   },
   SCROLL: {
-    BASE: 1.0  // pixels per frame baseline
+    // All scroll/movement rates are in pixels per second (px/s)
+    PX_PER_SEC: 60
+  },
+  BACKGROUND: {
+    // Background scroll is tied to world scroll via this ratio (0 = fixed, 1 = same speed as ground)
+    PARALLAX_RATIO: 0.5
   },
   TILE: {
     H: 200,           // row height
@@ -28,7 +33,7 @@ export const CONFIG = {
     HEAD_OFFSET_Y: -18,
     BASE_STEP: 1.0, LEG_SPEED: 0.7, HEAD_BOB_SPEED: 0.5,
     MOUNT_OFFSET_X: 30, MOUNT_OFFSET_Y: 4,
-    MOVE_PX: 2.0,
+    MOVE_PX_PER_SEC: 120,
     TWIST_DEG: 60,
     SQUASH_R: 18
   },
@@ -56,8 +61,11 @@ export const CONFIG = {
     R: 10,
     SPEED_MIN: 0.1,
     SPEED_MAX: 1.6,
-    TALK_CHANCE: 0.04,
+    TALK_CHANCE: 0.05,
     TALK_TIME: 1.2,
+    TALK_DENSITY: 0.12,       // NEW: per-second chance an IBS starts talking mid-run
+    TALK_COOLDOWN: 3.0,       // NEW: minimum seconds between lines for the same IBS
+
     ANIM: {
         WALK_FREQ: 8.0,     // base step frequency (higher = faster swing)
         SWAY_DEG:  8,       // max torso sway in degrees (scaled per IBS)

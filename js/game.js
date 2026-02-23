@@ -8,6 +8,7 @@ import { Particles } from './particles.js';
 import { Powerups } from './powerups.js';
 import { Turrets } from './turrets.js';
 import { IBS } from './ibs.js';
+import { HUD } from './hud.js';
 
 let lastT = 0;
 let player = null;
@@ -23,9 +24,13 @@ function startRAF(){
     const dt = Math.min(0.033, (t - lastT)/1000);
     lastT = t;
 
+    // Per-frame scroll delta in px
+    world.dy = world.scroll * dt;
+
+    Background.update?.(dt);
     Background.draw(ctx);
 
-    Tiles.update(); Tiles.draw(ctx);
+    Tiles.update(dt); Tiles.draw(ctx);
     Powerups.update(dt); Powerups.draw(ctx);
     IBS.update(dt); IBS.draw(ctx);
     Turrets.update(dt); Turrets.draw(ctx);
@@ -39,8 +44,9 @@ function startRAF(){
       return;
     }
 
-    world.dist += dt * world.scroll * 60;
-    const el = document.getElementById('scoreDist'); if (el) el.textContent = Math.floor(world.dist);
+    // Distance is tracked in scrolled pixels (simple, stable across refresh rates)
+    world.dist += world.dy;
+    HUD.tick();
   }
   rafId = requestAnimationFrame(frame);
 }
@@ -48,19 +54,14 @@ function startRAF(){
 export function startGame(){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  world.running = false; world.dist = 0; lastT = 0;
+  world.running = false; world.dist = 0; world.dy = 0; world.ibsHit = 0; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Particles.reset?.();
 
   player = new Player(); world.player = player;
 
-  const status = document.getElementById('status'); if (status) status.textContent = 'Running…';
-  const btn = document.getElementById('restart'); if (btn) btn.textContent = 'Restart ↻';
-
-    world.ibsHit = 0;
-    const h2 = document.getElementById('scoreIBS');
-    if (h2) h2.textContent = 0;
+  HUD.setRestartLabel('Restart ↻');
 
   world.running = true;
   startRAF();
@@ -69,7 +70,7 @@ export function startGame(){
 export function boot(){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  world.running = false; world.dist = 0; lastT = 0;
+  world.running = false; world.dist = 0; world.dy = 0; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Particles.reset?.();
@@ -81,20 +82,22 @@ export function boot(){
   Powerups.draw(ctx);
   Turrets.draw(ctx);
   player.draw(ctx);
+
+  HUD.tick();
 }
 
 export function gameOver(msg){
   world.running = false;
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  const status = document.getElementById('status'); if (status) status.textContent = msg + ' — Game Over';
-  const btn = document.getElementById('restart'); if (btn) btn.textContent = 'Restart ↻';
+  HUD.setRestartLabel('Restart ↻');
 }
 
 export function wireUI(){
+  HUD.init();
   const btn = document.getElementById('restart');
   if (btn){
-    btn.addEventListener('click', (e)=>{ e.preventDefault(); if (!world.running) startGame(); else startGame(); });
+    btn.addEventListener('click', (e)=>{ e.preventDefault(); startGame(); });
   }
   const cvs = document.getElementById('game');
   if (cvs){
