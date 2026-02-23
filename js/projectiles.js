@@ -7,12 +7,14 @@ const shots = [];
 export function spawn(x, y, angle, type='rifle', mods={}){
   const def = CONFIG.PROJECTILES[type] || CONFIG.PROJECTILES.rifle;
   const speedMul = mods.speedMul ?? 1.0;
+  const damageMul = mods.damageMul ?? 1.0;
   const dx = Math.sin(angle);
   const dy = -Math.cos(angle);
   const p = {
     type, x, y,
     vx: dx * def.speed * speedMul,
     vy: dy * def.speed * speedMul,
+    damage: (def.damage ?? 1) * damageMul,
     t: 0,
     ...def
   };
@@ -71,8 +73,11 @@ export function consumeHitsCircle(cx, cy, r, handler){
     const s = shots[i];
     const dx = s.x - cx, dy = s.y - cy;
     if (dx*dx + dy*dy <= r*r){
-      handler(s);            // let caller know which type hit
-      shots.splice(i,1);     // remove projectile
+      // handler may return false to keep projectile alive (pierce behavior)
+      const consume = handler(s);
+      if (consume !== false){
+        shots.splice(i,1);
+      }
     }
   }
 }

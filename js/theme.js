@@ -3,6 +3,8 @@ import { CONFIG } from './config.js';
 const INK = CONFIG.COLORS.INK;
 const BG = CONFIG.COLORS.BG;
 const RED = CONFIG.COLORS.ACCENT;
+const BLUE = CONFIG.COLORS.ENEMY;
+const SMOKE = CONFIG.COLORS.SMOKE;
 
 export const Theme = {
   // Tiles: draw white corridors (safe paths)
@@ -114,7 +116,7 @@ export const Theme = {
 
   drawEnemyBullet(g, s){
     g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI*2);
-    g.fillStyle = RED; g.fill();
+    g.fillStyle = BLUE; g.fill();
     g.lineWidth = 2; g.strokeStyle = BG; g.stroke();
   },
 
@@ -388,19 +390,32 @@ drawIBSBubble(g, p, r){
     g.save();
     g.globalAlpha = alpha;
 
-    if (p.type === 'spark'){
-      g.beginPath(); g.arc(p.x, p.y, 2, 0, Math.PI*2);
-      g.fillStyle = CONFIG.COLORS.ACCENT; g.fill();
-      g.lineWidth = 1; g.strokeStyle = CONFIG.COLORS.BG; g.stroke();
-    } else if (p.type === 'blood'){
+    if (p.type === 'blood'){
       // pure red dots, no white halo
       g.beginPath(); g.arc(p.x, p.y, 2.2, 0, Math.PI*2);
       g.fillStyle = CONFIG.COLORS.ACCENT; g.fill();
+    } else if (p.type === 'playerShot'){
+      g.beginPath(); g.arc(p.x, p.y, 2.2, 0, Math.PI*2);
+      g.fillStyle = INK; g.fill();
+      g.lineWidth = 1.2; g.strokeStyle = BG; g.stroke();
+    } else if (p.type === 'enemyShot'){
+      g.beginPath(); g.arc(p.x, p.y, 2.2, 0, Math.PI*2);
+      g.fillStyle = BLUE; g.fill();
+      g.lineWidth = 1.2; g.strokeStyle = BG; g.stroke();
+    } else if (p.type === 'warnSpark'){
+      g.beginPath(); g.arc(p.x, p.y, 1.8, 0, Math.PI*2);
+      g.fillStyle = INK; g.fill();
+      g.lineWidth = 1; g.strokeStyle = BG; g.stroke();
+    } else if (p.type === 'smoke'){
+      g.beginPath(); g.arc(p.x, p.y, 4.8, 0, Math.PI*2);
+      g.fillStyle = SMOKE; g.fill();
+    } else if (p.type === 'damage' || p.type === 'explosion'){
+      g.beginPath(); g.arc(p.x, p.y, 1.5, 0, Math.PI*2);
+      g.fillStyle = INK; g.fill();
     } else {
-      // explosion
-      g.beginPath(); g.arc(p.x, p.y, 4, 0, Math.PI*2);
-      g.fillStyle = CONFIG.COLORS.INK; g.fill();
-      g.lineWidth = 2; g.strokeStyle = CONFIG.COLORS.ACCENT; g.stroke();
+      g.beginPath(); g.arc(p.x, p.y, 2.2, 0, Math.PI*2);
+      g.fillStyle = INK; g.fill();
+      g.lineWidth = 1.2; g.strokeStyle = BG; g.stroke();
     }
 
     g.restore();

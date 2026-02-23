@@ -2,7 +2,9 @@ export const CONFIG = {
   COLORS: {
     BG: '#ffffff',
     INK: '#000000',
-    ACCENT: '#e01a1a'
+    ACCENT: '#e01a1a',
+    ENEMY: '#2a66ff',
+    SMOKE: '#6f6f6f'
   },
   CANVAS: {
     W: 1024,
@@ -27,6 +29,7 @@ export const CONFIG = {
   PLAYER: {
     START_X: 0.5,  // fraction of screen width
     START_Y: 0.90, // fraction of screen height
+    HP: 120,
     LEG_W: 13, LEG_H: 26, LEG_OFFSET_X: 20, LEG_OFFSET_Y: 10, LEG_LIFT_Y: 8,
     TORSO_W: 40, TORSO_H: 26,
     HEAD: 16, HEAD_BOB_X: 4,
@@ -44,11 +47,11 @@ export const CONFIG = {
     rocket:  { cooldown: 0.90, muzzle:{x:0, y:-18} }
   },
   PROJECTILES: {
-    rifle:    { speed: 420, life: 3, r: 3 },
-    chaingun: { speed: 520, life: 2, len: 18, w: 3 },
-    cannon:   { speed: 360, life: 2.0, r: 5 },
+    rifle:    { speed: 420, life: 3, r: 3, damage: 10 },
+    chaingun: { speed: 520, life: 2, len: 18, w: 3, damage: 6 },
+    cannon:   { speed: 360, life: 2.0, r: 5, damage: 40 },
     rocket: {
-      speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6,
+      speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6, damage: 55,
       ramp_sec: 0.6, accel_base: 0.2, accel_peak: 3.0,
       trail_dt: 0.03, trail_len: 12, puff_r0: 2.0, puff_growth: 22, puff_fade: 1.6
     }
@@ -59,6 +62,7 @@ export const CONFIG = {
     MAX: 30,           // soft cap on concurrent IBS
     SEED: 6,          // how many to pre-seed above screen on start
     R: 10,
+    HP: 1,
     SPEED_MIN: 0.1,
     SPEED_MAX: 1.6,
     TALK_CHANCE: 0.05,
@@ -75,12 +79,39 @@ export const CONFIG = {
   ENEMIES: {
     TURRET: {
       SPAWN_ROWS: 2,
-      SIZE: 18,
-      FIRE_COOLDOWN_MIN: 2,
-      FIRE_COOLDOWN_MAX: 4,
-      BULLET_SPEED: 100,
       BULLET_LIFE: 8,
-      BULLET_R: 4.5
+      TYPES: {
+        small: {
+          size: 13,
+          hp: 35,
+          fireCooldownMin: 0.9,
+          fireCooldownMax: 1.5,
+          bulletSpeed: 180,
+          bulletDamage: 7,
+          bulletR: 3.2,
+          weight: 0.45
+        },
+        medium: {
+          size: 18,
+          hp: 70,
+          fireCooldownMin: 1.5,
+          fireCooldownMax: 2.4,
+          bulletSpeed: 175,
+          bulletDamage: 14,
+          bulletR: 4.5,
+          weight: 0.35
+        },
+        large: {
+          size: 26,
+          hp: 130,
+          fireCooldownMin: 1.4,
+          fireCooldownMax: 2.1,
+          bulletSpeed: 105,
+          bulletDamage: 28,
+          bulletR: 6.2,
+          weight: 0.20
+        }
+      }
     }
   },
   POWERUPS: {

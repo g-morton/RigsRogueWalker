@@ -7,11 +7,22 @@ export function reset(){
   pool.length = 0;
 }
 
-export function spawnImpact(x, y, type = 'spark'){
-  // type: 'spark' (rifle/chaingun) | 'explosion' (cannon/rocket)
-  const count = (type === 'explosion') ? 20 : 8;
-  const speed = (type === 'explosion') ? 220 : 120;
-  const life  = (type === 'explosion') ? 0.8  : 0.4;
+export function spawnImpact(x, y, type = 'playerShot', amount = 1){
+  // type: 'blood' | 'damage' | 'explosion' | 'playerShot' | 'enemyShot' | 'warnSpark' | 'smoke'
+  const isExplosion = (type === 'explosion');
+  const isDamage = (type === 'damage');
+  const isBlood = (type === 'blood');
+  const isEnemyShot = (type === 'enemyShot');
+  const isWarnSpark = (type === 'warnSpark');
+  const isSmoke = (type === 'smoke');
+
+  const baseCount = isExplosion ? 20 : (isDamage ? 14 : (isBlood ? 10 : (isEnemyShot ? 10 : (isWarnSpark ? 5 : (isSmoke ? 4 : 8)))));
+  const baseSpeed = isExplosion ? 220 : (isDamage ? 170 : (isBlood ? 140 : (isEnemyShot ? 130 : (isWarnSpark ? 95 : (isSmoke ? 42 : 120)))));
+  const baseLife  = isExplosion ? 0.8 : (isDamage ? 0.65 : (isBlood ? 0.5 : (isEnemyShot ? 0.5 : (isWarnSpark ? 0.32 : (isSmoke ? 0.95 : 0.4)))));
+  const intensity = Math.max(0.35, Math.min(3.0, amount));
+  const count = Math.max(4, Math.round(baseCount * intensity));
+  const speed = baseSpeed * (0.85 + intensity * 0.3);
+  const life  = baseLife * (0.85 + intensity * 0.2);
 
   for (let i=0;i<count;i++){
     const a = Math.random() * Math.PI * 2;

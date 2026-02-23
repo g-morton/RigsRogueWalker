@@ -8,7 +8,7 @@ import { Projectiles } from './projectiles.js';
 
 // ---------------------------------------------------------------------------
 // State
-const ibs = [];     // walkers: {x,y,vx,dir,t,talk?,talkT,animT,swayMul,bobMul}
+const ibs = [];     // walkers: {x,y,vx,dir,t,talk?,talkT,animT,swayMul,bobMul,hp,maxHp}
 const splats = [];  // gore:   {x,y,t,life,blobs[],scrollY}
 let accPx = 0;
 
@@ -61,7 +61,9 @@ function spawnOne(forcedY = null){
         talkCD: 0,
         animT: 0,
         swayMul: 0.7 + Math.random()*0.8, // 0.7–1.5x
-        bobMul:  0.7 + Math.random()*1.0  // 0.7–1.7x
+        bobMul:  0.7 + Math.random()*1.0, // 0.7-1.7x
+        hp: cfg.HP,
+        maxHp: cfg.HP
       });
       return;
     }
@@ -70,7 +72,8 @@ function spawnOne(forcedY = null){
   const speed = rand(cfg.SPEED_MIN, cfg.SPEED_MAX);
   ibs.push({
     x: world.w/2, y, vx: speed, dir:(Math.random()<0.5?-1:1), t:0, talk:null, talkT:0, talkCD: 0,
-    animT: 0, swayMul: 0.7 + Math.random()*0.8, bobMul: 0.7 + Math.random()*1.0
+    animT: 0, swayMul: 0.7 + Math.random()*0.8, bobMul: 0.7 + Math.random()*1.0,
+    hp: cfg.HP, maxHp: cfg.HP
   });
 }
 
@@ -157,16 +160,18 @@ export function update(dt){
       continue;
     }
 
-    // 2) Projectile hits (non-consuming)
-    let gotHit = false;
-    Projectiles.forEachHitsCircle(p.x, p.y, cfg.R, (proj)=>{
-      if (gotHit) return;
-      Particles.spawnImpact(proj.x, proj.y, 'blood'); // immediate spray
-      splats.push(makeSplat(p.x, p.y));               // ground splat
-      gotHit = true;
+    // 2) Projectile hits (consuming + damage-based)
+    Projectiles.consumeHitsCircle(p.x, p.y, cfg.R, (proj)=>{
+      const damage = Math.max(1, proj.damage ?? 1);
+      p.hp -= damage;
+      Particles.spawnImpact(proj.x, proj.y, 'blood', damage / 10);
+      // Rockets should pierce through IBS instead of being blocked.
+      return proj.type !== 'rocket';
     });
 
-    if (gotHit){
+    if (p.hp <= 0){
+      Particles.spawnImpact(p.x, p.y, 'blood', p.maxHp / 8);
+      splats.push(makeSplat(p.x, p.y));
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
       continue;
@@ -203,3 +208,4 @@ export function drawBubbles(g){
 }
 
 export const IBS = { reset, update, draw, drawBubbles };
+

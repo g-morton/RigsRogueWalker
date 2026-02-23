@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { world, canvas, clamp } from './utils.js';
 import { Theme } from './theme.js';
 import { Projectiles } from './projectiles.js';
+import { Particles } from './particles.js';
 import { getMuzzleLocal, getCooldownSec } from './weapons.js';
 
 const MAX_TWIST = CONFIG.PLAYER.TWIST_DEG * Math.PI/180;
@@ -20,6 +21,11 @@ export class Player{
     this.reloadMul = 1.0;
     this.projSpeedMul = 1.0;
     this.damageMul = 1.0;
+
+    this.maxHp = CONFIG.PLAYER.HP ?? 120;
+    this.hp = this.maxHp;
+    this.fxSparkT = 0;
+    this.fxSmokeT = 0;
   }
 
   update(dt){
@@ -48,6 +54,24 @@ export class Player{
     // cooldown tick
     this.cooldown.left = Math.max(0, this.cooldown.left - dt);
     this.cooldown.right = Math.max(0, this.cooldown.right - dt);
+
+    // Damage-state feedback (sparks/smoke as HP drops)
+    const hpRatio = this.hp / Math.max(1, this.maxHp);
+    this.fxSparkT = Math.max(0, this.fxSparkT - dt);
+    this.fxSmokeT = Math.max(0, this.fxSmokeT - dt);
+
+    if (hpRatio <= 0.75 && this.fxSparkT <= 0){
+      Particles.spawnImpact(this.x + (Math.random()*10 - 5), this.y - 10 + (Math.random()*8 - 4), 'warnSpark', 0.35);
+      this.fxSparkT = 0.12 + Math.random() * 0.2;
+    }
+    if (hpRatio <= 0.5 && this.fxSmokeT <= 0){
+      Particles.spawnImpact(this.x + (Math.random()*14 - 7), this.y - 16 + (Math.random()*10 - 5), 'smoke', 0.55);
+      this.fxSmokeT = 0.22 + Math.random() * 0.3;
+    }
+
+    // Chaingun autofire while mouse button is held.
+    if (mouse.leftDown && this.weapons.left === 'chaingun') this.fire('left');
+    if (mouse.rightDown && this.weapons.right === 'chaingun') this.fire('right');
   }
 
   draw(g){
@@ -77,14 +101,29 @@ export class Player{
     const wx = this.x + rx;
     const wy = this.y + ry;
 
-    Projectiles.spawn(wx, wy, a, type, { speedMul: this.projSpeedMul });
+    Projectiles.spawn(wx, wy, a, type, {
+      speedMul: this.projSpeedMul,
+      damageMul: this.damageMul
+    });
     this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
   }
 }
 
 // simple input module embedded (kept small)
 const keys = new Set();
-const mouse = { x:0, y:0 };
+const mouse = { x:0, y:0, leftDown:false, rightDown:false };
 window.addEventListener('keydown', e => keys.add(e.key));
 window.addEventListener('keyup', e => keys.delete(e.key));
 window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mousedown', e => {
+  if (e.button === 0) mouse.leftDown = true;
+  if (e.button === 2) mouse.rightDown = true;
+});
+window.addEventListener('mouseup', e => {
+  if (e.button === 0) mouse.leftDown = false;
+  if (e.button === 2) mouse.rightDown = false;
+});
+window.addEventListener('blur', () => {
+  mouse.leftDown = false;
+  mouse.rightDown = false;
+});
