@@ -4,8 +4,9 @@ import { Theme } from './theme.js';
 
 const rows = []; // each row: { y, h, corridors:[{x,w},{x,w}] }
 let generationEnabled = true;
+let fullMode = false;
 
-function newRow(y, full=false){
+function newRow(y, full = fullMode){
   const h = CONFIG.TILE.H;
   if (full){
     rows.push({ y, h, corridors:[{x:0, w:world.w}] });
@@ -30,14 +31,16 @@ export const Tiles = {
   reset(){
     rows.length = 0;
     generationEnabled = true;
+    fullMode = false;
   },
   regen(){
     rows.length = 0;
     generationEnabled = true;
+    fullMode = false;
     // Seed rows from bottom up so that last element is top-most offscreen
     let y = world.h + CONFIG.TILE.H/2;
     for (let i=0;i<20;i++){
-      const full = i < CONFIG.TILE.START_SAFE_ROWS;
+      const full = fullMode || i < CONFIG.TILE.START_SAFE_ROWS;
       newRow(y, full);
       y -= CONFIG.TILE.H;
     }
@@ -72,6 +75,23 @@ export const Tiles = {
   },
   setGenerationEnabled(enabled){
     generationEnabled = !!enabled;
+  },
+  setFullMode(enabled, immediate = false){
+    fullMode = !!enabled;
+    if (fullMode && immediate){
+      for (const r of rows){
+        r.corridors = [{ x:0, w:world.w }];
+      }
+    }
+  },
+  fillVisibleFull(){
+    rows.length = 0;
+    const h = CONFIG.TILE.H;
+    let y = world.h + h/2;
+    for (let i=0;i<20;i++){
+      newRow(y, true);
+      y -= h;
+    }
   },
   isCleared(){
     return rows.length === 0;

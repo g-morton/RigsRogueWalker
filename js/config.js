@@ -118,7 +118,7 @@ export const CONFIG = {
     }
   },
   BOSS: {
-    INTERVAL_DIST: 5000,
+    INTERVAL_DIST: 2000,
     TURRET_TYPE: 'large',
     HP_MULT: 4.0,
     SIZE_MULT: 1.5,

@@ -17,6 +17,7 @@ let elSplash = null;
 let elBossHud = null;
 let elBossBarFill = null;
 let elBossBanner = null;
+let elPowerKey = null;
 let bossBannerTimer = null;
 
 let lastDist = -1;
@@ -39,6 +40,7 @@ export const HUD = {
     elBossHud = document.getElementById('bossHud');
     elBossBarFill = document.getElementById('bossBarFill');
     elBossBanner = document.getElementById('bossBanner');
+    elPowerKey = document.getElementById('powerKey');
     lastDist = -1;
     lastIBS = -1;
     lastEnemies = -1;
@@ -106,6 +108,11 @@ export const HUD = {
     if (elBossBanner) elBossBanner.style.display = 'none';
     if (elBossHud) elBossHud.style.display = 'none';
     if (elBossBarFill) elBossBarFill.style.width = '100%';
+  },
+
+  setPowerKeyVisible(visible){
+    if (!elPowerKey) return;
+    elPowerKey.style.display = visible ? 'block' : 'none';
   },
 
   // Call once per frame (cheap, only writes when values change)

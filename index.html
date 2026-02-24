@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rigs Rogue Walker — Refactor 2</title>
+  <title>Rigs Rogue Walker - Refactor 2</title>
   <style>
     html, body { margin:0; padding:0; background:#fff; color:#000; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
     body { overflow:hidden; }
+
     #gameFrame {
       position: fixed;
       top: 50%;
@@ -18,104 +19,69 @@
       background: #fff;
       border: 3px solid #000;
       box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    #powerKey {
-      position: absolute;
-      left: calc(100% + 12px);
-      top: 0;
-      width: 210px;
-      background: #fff;
-      color: #000;
-      border: 2px solid #000;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 13px;
-      line-height: 1.45;
+
+    #topUi {
+      height: 38px;
+      flex: 0 0 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 8px;
       box-sizing: border-box;
+      background: #111;
+      color: #fff;
+      border-bottom: 2px solid #000;
     }
-    #powerKey h3 { margin: 0 0 6px; font-size: 14px; }
-    #powerKey p { margin: 2px 0; }
-    @media (max-width: 1120px){
-      #powerKey{
-        left: 0;
-        top: calc(100% + 10px);
-        width: min(92vw, 320px);
-      }
+
+    #hud {
+      position: static;
+      background: transparent;
+      color: #fff;
+      padding: 0;
+      border-radius: 0;
+      font-size: 13px;
+      white-space: nowrap;
     }
-    #hud { position:fixed; top:10px; left:10px; background:#000; color:#fff; padding:8px 10px; border-radius:8px; font-size:14px; }
-    #controls { position:fixed; top:10px; right:10px; }
-    #controls a { display:inline-block; padding:8px 12px; border-radius:8px; text-decoration:none; background:#000; color:#fff; margin-left:8px; }
-    #splash {
-      position: fixed;
-      inset: 0;
-      display: none;
+
+    #controls {
+      position: static;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.72);
-      z-index: 11;
     }
-    #splashCard {
-      width: min(94vw, 640px);
+
+    #controls a {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 7px;
+      text-decoration: none;
       background: #fff;
       color: #000;
-      border-radius: 14px;
-      padding: 20px 22px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
-      border: 2px solid #000;
+      margin-left: 0;
+      font-size: 12px;
+      font-weight: 700;
     }
-    #splashTitle { margin: 0 0 10px; font-size: 34px; line-height: 1.1; }
-    #splashBody { font-size: 15px; line-height: 1.5; margin-bottom: 16px; }
-    #splashPlay {
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 8px;
-      text-decoration: none;
-      background: #000;
-      color: #fff;
-      font-weight: 600;
+
+    #playArea {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
     }
-    #gameOver {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.72);
-      z-index: 10;
-    }
-    #gameOverCard {
-      width: min(92vw, 520px);
-      background: #fff;
-      color: #000;
-      border-radius: 14px;
-      padding: 18px 20px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
-      border: 2px solid #000;
-    }
-    #gameOverTitle { margin: 0 0 6px; font-size: 28px; line-height: 1.1; }
-    #gameOverReason { margin: 0 0 12px; opacity: 0.8; }
-    #gameOverScore { font-size: 34px; font-weight: 800; margin-bottom: 4px; }
-    #gameOverMsg { margin-bottom: 12px; font-size: 15px; }
-    #gameOverStats { font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
-    #playAgain {
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 8px;
-      text-decoration: none;
-      background: #000;
-      color: #fff;
-      font-weight: 600;
-    }
+
     #bossHud {
-      position: fixed;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(92vw, 920px);
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
       display: none;
-      z-index: 12;
+      z-index: 8;
       pointer-events: none;
     }
+
     #bossLabel {
       font-size: 12px;
       font-weight: 700;
@@ -125,6 +91,7 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.9);
       margin-bottom: 4px;
     }
+
     #bossBarWrap {
       width: 100%;
       height: 14px;
@@ -132,12 +99,83 @@
       border: 2px solid #000;
       box-sizing: border-box;
     }
+
     #bossBarFill {
       width: 100%;
       height: 100%;
       background: #e01a1a;
       transition: width 80ms linear;
     }
+
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.72);
+      z-index: 11;
+    }
+
+    #splashCard {
+      width: min(94vw, 640px);
+      background: #fff;
+      color: #000;
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      border: 2px solid #000;
+    }
+
+    #splashTitle { margin: 0 0 10px; font-size: 34px; line-height: 1.1; }
+    #splashBody { font-size: 15px; line-height: 1.5; margin-bottom: 16px; }
+
+    #splashPlay {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      background: #000;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    #gameOver {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.72);
+      z-index: 10;
+    }
+
+    #gameOverCard {
+      width: min(92vw, 520px);
+      background: #fff;
+      color: #000;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      border: 2px solid #000;
+    }
+
+    #gameOverTitle { margin: 0 0 6px; font-size: 28px; line-height: 1.1; }
+    #gameOverReason { margin: 0 0 12px; opacity: 0.8; }
+    #gameOverScore { font-size: 34px; font-weight: 800; margin-bottom: 4px; }
+    #gameOverMsg { margin-bottom: 12px; font-size: 15px; }
+    #gameOverStats { font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+
+    #playAgain {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      background: #000;
+      color: #fff;
+      font-weight: 600;
+    }
+
     #bossBanner {
       position: fixed;
       top: 50%;
@@ -157,49 +195,49 @@
       pointer-events: none;
       box-shadow: 0 10px 30px rgba(0,0,0,0.45);
     }
+
     canvas { display:block; width:100%; height:100%; }
   </style>
 </head>
 <body>
-    <div id="hud">
-        Dist: <span id="scoreDist">0</span>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        Enemies: <span id="scoreEnemies">0</span>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        IBS: <span id="scoreIBS">0</span>
-    </div>
-  <div id="controls">
-    <a href="#" id="restart">Start ▶</a>
-  </div>
-  <div id="bossHud">
-    <div id="bossLabel">Boss Integrity</div>
-    <div id="bossBarWrap"><div id="bossBarFill"></div></div>
-  </div>
   <div id="bossBanner">Boss Approaching</div>
   <div id="gameFrame">
-    <canvas id="game" width="768" height="1024"></canvas>
-    <aside id="powerKey">
-      <h3>Power-ups</h3>
-      <p><strong>D</strong> Damage up</p>
-      <p><strong>F</strong> Projectile speed up</p>
-      <p><strong>R</strong> Fire rate up</p>
-      <p><strong>M</strong> Move speed up</p>
-      <p><strong>HP</strong> Repair</p>
-      <p><strong>L-*</strong> Left weapon swap</p>
-      <p><strong>R-*</strong> Right weapon swap</p>
-    </aside>
+    <div id="topUi">
+      <div id="hud">
+          Dist: <span id="scoreDist">0</span>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          Enemies: <span id="scoreEnemies">0</span>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          IBS: <span id="scoreIBS">0</span>
+      </div>
+      <div id="controls">
+        <a href="#" id="restart">Start ></a>
+      </div>
+    </div>
+
+    <div id="playArea">
+      <div id="bossHud">
+        <div id="bossLabel">Boss Integrity</div>
+        <div id="bossBarWrap"><div id="bossBarFill"></div></div>
+      </div>
+      <canvas id="game" width="768" height="1024"></canvas>
+
+    </div>
   </div>
+
   <div id="splash">
     <div id="splashCard">
       <h1 id="splashTitle">Rigs - Rogue Walker</h1>
       <div id="splashBody">
         <strong>Rules:</strong> See how far you can get, destroy enemies, while avoiding hurting any innocent bystanders.<br>
         <strong>Controls:</strong> Use cursor keys to move, and mouse to target and shoot.<br>
-        <strong>Power-ups:</strong> Keep an eye out for power-ups to upgrade your Rig.
+        <strong>Power-ups:</strong> Keep an eye out for upgrades.<br>
+        <strong>Key:</strong> D Damage up, F Projectile speed up, R Fire rate up, M Move speed up, HP Repair, L-* Left weapon swap, R-* Right weapon swap.
       </div>
       <a href="#" id="splashPlay">Play</a>
     </div>
   </div>
+
   <div id="gameOver">
     <div id="gameOverCard">
       <h2 id="gameOverTitle">Game Over</h2>

@@ -44,19 +44,20 @@ function maybeStartBossEncounter(){
   world.spawnLocked = true;
   world.spawnScale = 0;
   bossPhase = 'clearing';
-  HUD.showBossBanner?.('Boss Approaching', 1800);
-  Tiles.setGenerationEnabled?.(false);
+  // Keep floor generation active, but switch to full-width white floor.
+  Tiles.setFullMode?.(true);
+  Tiles.setGenerationEnabled?.(true);
 }
 
 function maybeAdvanceBossSequence(){
   if (!world.bossActive) return;
 
   if (bossPhase === 'clearing'){
-    const clear = !!Tiles.isCleared?.() &&
-      !IBS.hasActive?.() &&
+    const clear = !IBS.hasActive?.() &&
       !Powerups.hasActive?.() &&
       !Turrets.hasActiveNonBoss?.();
     if (clear){
+      HUD.showBossBanner?.('Boss Approaching', 1500);
       Turrets.startBoss?.(CONFIG.BOSS?.TURRET_TYPE ?? 'large', { fromTop: true });
       bossPhase = 'approach';
     }
@@ -78,10 +79,12 @@ function maybeAdvanceBossSequence(){
   world.spawnLocked = false;
   world.spawnScale = 0;
   bossPhase = 'none';
+  Tiles.setFullMode?.(false);
   Tiles.setGenerationEnabled?.(true);
-  while ((world.nextBossDist | 0) <= (world.dist | 0)){
-    world.nextBossDist = (world.nextBossDist | 0) + interval;
-  }
+  world.nextBossDist = Math.max(
+    ((world.nextBossDist | 0) + interval),
+    ((world.dist | 0) + interval)
+  );
 }
 
 function startRAF(){
@@ -128,7 +131,7 @@ function startRAF(){
     }
 
     // fall check
-    if (!player.dead && !world.bossActive && !Tiles.isSafe(player.x, player.y)){
+    if (!player.dead && !world.bossActive && !Tiles.isCleared?.() && !Tiles.isSafe(player.x, player.y)){
       gameOver('You fell!');
       return;
     }
@@ -154,6 +157,7 @@ export function startGame(){
   HUD.hideSplash?.();
   HUD.hideGameOver?.();
   HUD.hideBossUI?.();
+  HUD.setPowerKeyVisible?.(false);
 
   world.running = true;
   startRAF();
@@ -171,6 +175,7 @@ export function boot(){
   HUD.showSplash?.();
   HUD.hideGameOver?.();
   HUD.hideBossUI?.();
+  HUD.setPowerKeyVisible?.(true);
 
   Background.draw(ctx);
   Tiles.draw(ctx);
@@ -188,6 +193,7 @@ export function gameOver(msg){
   loopSeq++;
   HUD.setRestartLabel('Restart ↻');
   HUD.hideBossUI?.();
+  HUD.setPowerKeyVisible?.(true);
   const r = evaluateRun();
   HUD.showGameOver?.({
     title: 'Game Over',

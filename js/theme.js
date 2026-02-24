@@ -111,6 +111,11 @@ export const Theme = {
     g.fillRect(-size, -size, size*2, size*2);
     g.lineWidth = 2; g.strokeStyle = BG;
     g.strokeRect(-size+1, -size+1, size*2-2, size*2-2);
+    // Muzzle marker: projectile origin.
+    g.beginPath();
+    g.arc(0, 0, Math.max(2.5, size * 0.22), 0, Math.PI * 2);
+    g.fillStyle = BG;
+    g.fill();
     g.restore();
   },
 
