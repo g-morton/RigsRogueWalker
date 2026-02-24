@@ -106,6 +106,57 @@
       color: #fff;
       font-weight: 600;
     }
+    #bossHud {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(92vw, 920px);
+      display: none;
+      z-index: 12;
+      pointer-events: none;
+    }
+    #bossLabel {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+      margin-bottom: 4px;
+    }
+    #bossBarWrap {
+      width: 100%;
+      height: 14px;
+      background: rgba(0,0,0,0.18);
+      border: 2px solid #000;
+      box-sizing: border-box;
+    }
+    #bossBarFill {
+      width: 100%;
+      height: 100%;
+      background: #e01a1a;
+      transition: width 80ms linear;
+    }
+    #bossBanner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      background: rgba(0,0,0,0.82);
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      z-index: 13;
+      pointer-events: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    }
     canvas { display:block; width:100%; height:100%; }
   </style>
 </head>
@@ -120,6 +171,11 @@
   <div id="controls">
     <a href="#" id="restart">Start ▶</a>
   </div>
+  <div id="bossHud">
+    <div id="bossLabel">Boss Integrity</div>
+    <div id="bossBarWrap"><div id="bossBarFill"></div></div>
+  </div>
+  <div id="bossBanner">Boss Approaching</div>
   <div id="gameFrame">
     <canvas id="game" width="768" height="1024"></canvas>
     <aside id="powerKey">

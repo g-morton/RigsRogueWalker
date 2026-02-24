@@ -14,6 +14,10 @@ let elGoScore = null;
 let elGoMsg = null;
 let elGoStats = null;
 let elSplash = null;
+let elBossHud = null;
+let elBossBarFill = null;
+let elBossBanner = null;
+let bossBannerTimer = null;
 
 let lastDist = -1;
 let lastIBS = -1;
@@ -32,11 +36,15 @@ export const HUD = {
     elGoMsg = document.getElementById('gameOverMsg');
     elGoStats = document.getElementById('gameOverStats');
     elSplash = document.getElementById('splash');
+    elBossHud = document.getElementById('bossHud');
+    elBossBarFill = document.getElementById('bossBarFill');
+    elBossBanner = document.getElementById('bossBanner');
     lastDist = -1;
     lastIBS = -1;
     lastEnemies = -1;
     this.hideGameOver();
     this.showSplash();
+    this.hideBossUI();
   },
 
   setRestartLabel(text){
@@ -66,6 +74,38 @@ export const HUD = {
 
   hideSplash(){
     if (elSplash) elSplash.style.display = 'none';
+  },
+
+  showBossBanner(text = 'Boss Approaching', ms = 1800){
+    if (!elBossBanner) return;
+    if (bossBannerTimer){
+      clearTimeout(bossBannerTimer);
+      bossBannerTimer = null;
+    }
+    elBossBanner.textContent = text;
+    elBossBanner.style.display = 'block';
+    bossBannerTimer = setTimeout(() => {
+      if (elBossBanner) elBossBanner.style.display = 'none';
+      bossBannerTimer = null;
+    }, Math.max(0, ms | 0));
+  },
+
+  setBossBar(hp, maxHp){
+    const max = Math.max(1, maxHp ?? 1);
+    const cur = Math.max(0, hp ?? 0);
+    const ratio = Math.max(0, Math.min(1, cur / max));
+    if (elBossHud) elBossHud.style.display = ratio > 0 ? 'block' : 'none';
+    if (elBossBarFill) elBossBarFill.style.width = `${(ratio * 100).toFixed(1)}%`;
+  },
+
+  hideBossUI(){
+    if (bossBannerTimer){
+      clearTimeout(bossBannerTimer);
+      bossBannerTimer = null;
+    }
+    if (elBossBanner) elBossBanner.style.display = 'none';
+    if (elBossHud) elBossHud.style.display = 'none';
+    if (elBossBarFill) elBossBarFill.style.width = '100%';
   },
 
   // Call once per frame (cheap, only writes when values change)

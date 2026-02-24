@@ -16,6 +16,10 @@ export const world = {
   // Per-frame scroll delta in px (computed each frame by the game loop)
   dy: 0,
   player: null,
+  bossActive: false,
+  nextBossDist: (CONFIG.BOSS?.INTERVAL_DIST ?? 5000),
+  spawnLocked: false,
+  spawnScale: 1,
   // HUD counters (read by hud.js)
   ibsHit: 0,
   enemyDestroyed: 0

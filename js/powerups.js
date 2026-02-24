@@ -86,11 +86,13 @@ export function reset(){
 export function update(dt){
   const dy = world.dy;
   // accumulate pixel scroll like tiles
-  accPx += dy;
-  const spacingPx = CONFIG.TILE.H * CONFIG.POWERUPS.EVERY_ROWS;
-  while (accPx >= spacingPx){
-    accPx -= spacingPx;
-    spawnOne();
+  if (!world.spawnLocked){
+    accPx += dy;
+    const spacingPx = CONFIG.TILE.H * CONFIG.POWERUPS.EVERY_ROWS;
+    while (accPx >= spacingPx){
+      accPx -= spacingPx;
+      if (Math.random() <= (world.spawnScale ?? 1)) spawnOne();
+    }
   }
   for(const it of items) it.y += dy;
 
@@ -133,4 +135,13 @@ export function draw(g){
   for(const it of items) Theme.drawPowerup(g, it, R);
 }
 
-export const Powerups = { reset, update, draw };
+export function clearActive(){
+  items.length = 0;
+  accPx = 0;
+}
+
+export function hasActive(){
+  return items.length > 0;
+}
+
+export const Powerups = { reset, update, draw, clearActive, hasActive };

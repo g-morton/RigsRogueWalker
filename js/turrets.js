@@ -66,6 +66,30 @@ function spawnTurret(){
   turrets.push({ x: world.w / 2, y, ...turretBase });
 }
 
+function spawnBoss(typeName = (CONFIG.BOSS?.TURRET_TYPE ?? 'large'), opts = {}){
+  const typeDef = getTurretTypeDef(typeName);
+  const hpMult = Math.max(1, CONFIG.BOSS?.HP_MULT ?? 4.0);
+  const sizeMult = Math.max(1, CONFIG.BOSS?.SIZE_MULT ?? 1.5);
+  const hp = Math.round(typeDef.hp * hpMult);
+  const size = Math.round(typeDef.size * sizeMult);
+  const stopY = Math.round(world.h * 0.24);
+  const y = opts.fromTop ? (-size - 24) : stopY;
+  const x = Math.round(world.w * 0.5);
+  turrets.push({
+    x, y,
+    type: typeName,
+    size,
+    hp,
+    maxHp: hp,
+    cool: randCooldown(typeDef) * 0.85,
+    fxSparkT: 0,
+    fxSmokeT: 0,
+    entering: !!opts.fromTop,
+    stopY,
+    boss: true
+  });
+}
+
 function fireAt(t, x1, y1){
   const typeDef = getTurretTypeDef(t.type);
   const x0 = t.x, y0 = t.y;
@@ -91,20 +115,47 @@ export function reset(){
   accPx = 0;
 }
 
+export function startBoss(typeName, opts = {}){
+  turrets.length = 0;
+  shots.length = 0;
+  spawnBoss(typeName, opts);
+}
+
+export function hasActiveBoss(){
+  return turrets.some(t => !!t.boss);
+}
+
+export function hasActiveNonBoss(){
+  if (shots.length > 0) return true;
+  return turrets.some(t => !t.boss);
+}
+
+export function getBossStatus(){
+  const b = turrets.find(t => !!t.boss);
+  if (!b) return null;
+  return { hp: b.hp, maxHp: b.maxHp, entered: !b.entering };
+}
+
 export function update(dt){
   const dy = world.dy;
   // Spawn cadence measured in scrolled pixels (matches Tiles behavior)
-  accPx += dy;
-  const spacingPx = CONFIG.TILE.H * CONFIG.ENEMIES.TURRET.SPAWN_ROWS;
-  while (accPx >= spacingPx){
-    accPx -= spacingPx;
-    spawnTurret();
+  if (!world.spawnLocked){
+    accPx += dy;
+    const spacingPx = CONFIG.TILE.H * CONFIG.ENEMIES.TURRET.SPAWN_ROWS;
+    while (accPx >= spacingPx){
+      accPx -= spacingPx;
+      if (Math.random() <= (world.spawnScale ?? 1)) spawnTurret();
+    }
   }
 
   // Move turrets with world scroll + fire on cooldown
   for (let i = turrets.length - 1; i >= 0; i--){
     const t = turrets[i];
     t.y += dy;
+    if (t.boss && t.entering && t.y >= t.stopY){
+      t.y = t.stopY;
+      t.entering = false;
+    }
     t.fxSparkT = Math.max(0, t.fxSparkT - dt);
     t.fxSmokeT = Math.max(0, t.fxSmokeT - dt);
 
@@ -144,7 +195,7 @@ export function update(dt){
 
     // Fire at player
     t.cool -= dt;
-    if (t.cool <= 0 && world.player){
+    if (!t.entering && t.cool <= 0 && world.player){
       fireAt(t, world.player.x, world.player.y);
       t.cool = randCooldown(getTurretTypeDef(t.type));
     }
@@ -191,4 +242,4 @@ export function draw(g){
   for (const s of shots)  Theme.drawEnemyBullet(g, s);
 }
 
-export const Turrets = { reset, update, draw };
+export const Turrets = { reset, update, draw, startBoss, hasActiveBoss, hasActiveNonBoss, getBossStatus };

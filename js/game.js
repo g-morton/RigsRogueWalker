@@ -15,6 +15,7 @@ let lastT = 0;
 let player = null;
 let rafId = null;
 let loopSeq = 0;
+let bossPhase = 'none'; // none | clearing | approach | fight
 
 function evaluateRun(){
   const distance = (world.dist | 0);
@@ -35,6 +36,54 @@ function evaluateRun(){
   return { score, message, distance, enemies, ibs };
 }
 
+function maybeStartBossEncounter(){
+  if (world.bossActive || bossPhase !== 'none') return;
+  const interval = Math.max(1, CONFIG.BOSS?.INTERVAL_DIST ?? 5000);
+  if ((world.dist | 0) < (world.nextBossDist | 0)) return;
+  world.bossActive = true;
+  world.spawnLocked = true;
+  world.spawnScale = 0;
+  bossPhase = 'clearing';
+  HUD.showBossBanner?.('Boss Approaching', 1800);
+  Tiles.setGenerationEnabled?.(false);
+}
+
+function maybeAdvanceBossSequence(){
+  if (!world.bossActive) return;
+
+  if (bossPhase === 'clearing'){
+    const clear = !!Tiles.isCleared?.() &&
+      !IBS.hasActive?.() &&
+      !Powerups.hasActive?.() &&
+      !Turrets.hasActiveNonBoss?.();
+    if (clear){
+      Turrets.startBoss?.(CONFIG.BOSS?.TURRET_TYPE ?? 'large', { fromTop: true });
+      bossPhase = 'approach';
+    }
+    return;
+  }
+
+  if (bossPhase === 'approach'){
+    const boss = Turrets.getBossStatus?.();
+    if (boss?.entered){
+      bossPhase = 'fight';
+    }
+    return;
+  }
+
+  if (bossPhase !== 'fight') return;
+  if (Turrets.hasActiveBoss?.()) return;
+  const interval = Math.max(1, CONFIG.BOSS?.INTERVAL_DIST ?? 5000);
+  world.bossActive = false;
+  world.spawnLocked = false;
+  world.spawnScale = 0;
+  bossPhase = 'none';
+  Tiles.setGenerationEnabled?.(true);
+  while ((world.nextBossDist | 0) <= (world.dist | 0)){
+    world.nextBossDist = (world.nextBossDist | 0) + interval;
+  }
+}
+
 function startRAF(){
   const mySeq = ++loopSeq;
   function frame(t){
@@ -44,8 +93,13 @@ function startRAF(){
     const dt = Math.min(0.033, (t - lastT)/1000);
     lastT = t;
 
+    maybeStartBossEncounter();
+    if (!world.spawnLocked && (world.spawnScale ?? 1) < 1){
+      world.spawnScale = Math.min(1, (world.spawnScale ?? 1) + dt / 6);
+    }
+
     // Per-frame scroll delta in px
-    world.dy = world.scroll * dt;
+    world.dy = (world.bossActive && bossPhase === 'fight') ? 0 : (world.scroll * dt);
 
     Background.update?.(dt);
     Background.draw(ctx);
@@ -54,6 +108,9 @@ function startRAF(){
     Powerups.update(dt); Powerups.draw(ctx);
     IBS.update(dt); IBS.draw(ctx);
     Turrets.update(dt); Turrets.draw(ctx);
+    const boss = Turrets.getBossStatus?.();
+    if (bossPhase === 'fight' && boss) HUD.setBossBar?.(boss.hp, boss.maxHp);
+    else HUD.setBossBar?.(0, 1);
     player.update(dt);
     if (!player.dead && player.hp <= 0){
       player.destroy();
@@ -63,13 +120,15 @@ function startRAF(){
     Particles.update(dt); Particles.draw(ctx);
     IBS.drawBubbles?.(ctx);
 
+    maybeAdvanceBossSequence();
+
     if (player.isDeathAnimDone?.()){
       gameOver('Your bot exploded!');
       return;
     }
 
     // fall check
-    if (!player.dead && !Tiles.isSafe(player.x, player.y)){
+    if (!player.dead && !world.bossActive && !Tiles.isSafe(player.x, player.y)){
       gameOver('You fell!');
       return;
     }
@@ -84,7 +143,7 @@ function startRAF(){
 export function startGame(){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  world.running = false; world.dist = 0; world.dy = 0; world.ibsHit = 0; world.enemyDestroyed = 0; lastT = 0;
+  world.running = false; world.dist = 0; world.dy = 0; world.ibsHit = 0; world.enemyDestroyed = 0; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Particles.reset?.();
@@ -94,6 +153,7 @@ export function startGame(){
   HUD.setRestartLabel('Restart ↻');
   HUD.hideSplash?.();
   HUD.hideGameOver?.();
+  HUD.hideBossUI?.();
 
   world.running = true;
   startRAF();
@@ -102,7 +162,7 @@ export function startGame(){
 export function boot(){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  world.running = false; world.dist = 0; world.dy = 0; world.enemyDestroyed = 0; lastT = 0;
+  world.running = false; world.dist = 0; world.dy = 0; world.enemyDestroyed = 0; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Particles.reset?.();
@@ -110,6 +170,7 @@ export function boot(){
   if (!player){ player = new Player(); world.player = player; }
   HUD.showSplash?.();
   HUD.hideGameOver?.();
+  HUD.hideBossUI?.();
 
   Background.draw(ctx);
   Tiles.draw(ctx);
@@ -126,6 +187,7 @@ export function gameOver(msg){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
   HUD.setRestartLabel('Restart ↻');
+  HUD.hideBossUI?.();
   const r = evaluateRun();
   HUD.showGameOver?.({
     title: 'Game Over',

@@ -127,17 +127,19 @@ export function update(dt){
   const dy = world.dy;
 
   // Spawn cadence by scrolled pixels (waves)
-  accPx += dy;
-  const spacingPx = CONFIG.TILE.H * cfg.SPAWN_ROWS;
-  while (accPx >= spacingPx){
-    accPx -= spacingPx;
-    spawnWave(cfg.PER_SPAWN|0);
+  if (!world.spawnLocked){
+    accPx += dy;
+    const spacingPx = CONFIG.TILE.H * cfg.SPAWN_ROWS;
+    while (accPx >= spacingPx){
+      accPx -= spacingPx;
+      if (Math.random() <= (world.spawnScale ?? 1)) spawnWave(cfg.PER_SPAWN|0);
+    }
   }
 
   // Gentle top-up toward MAX
-  if (ibs.length < (cfg.MAX|0)){
+  if (!world.spawnLocked && ibs.length < (cfg.MAX|0)){
     const deficit = (cfg.MAX|0) - ibs.length;
-    const p = Math.min(0.9, (deficit / Math.max(1, cfg.MAX)) * (dy / CONFIG.TILE.H) * 4.0);
+    const p = Math.min(0.9, (deficit / Math.max(1, cfg.MAX)) * (dy / CONFIG.TILE.H) * 4.0 * (world.spawnScale ?? 1));
     if (Math.random() < p) spawnOne();
   }
 
@@ -249,6 +251,16 @@ export function drawBubbles(g){
   }
 }
 
-export const IBS = { reset, update, draw, drawBubbles };
+export function clearActive(){
+  ibs.length = 0;
+  splats.length = 0;
+  accPx = 0;
+}
+
+export function hasActive(){
+  return ibs.length > 0;
+}
+
+export const IBS = { reset, update, draw, drawBubbles, clearActive, hasActive };
 
 

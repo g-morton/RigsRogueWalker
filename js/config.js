@@ -117,6 +117,13 @@ export const CONFIG = {
       }
     }
   },
+  BOSS: {
+    INTERVAL_DIST: 5000,
+    TURRET_TYPE: 'large',
+    HP_MULT: 4.0,
+    SIZE_MULT: 1.5,
+    ARENA_ROWS: 7
+  },
   POWERUPS: {
     RADIUS: 16,
     EVERY_ROWS: 5,

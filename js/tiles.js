@@ -3,6 +3,7 @@ import { world } from './utils.js';
 import { Theme } from './theme.js';
 
 const rows = []; // each row: { y, h, corridors:[{x,w},{x,w}] }
+let generationEnabled = true;
 
 function newRow(y, full=false){
   const h = CONFIG.TILE.H;
@@ -28,9 +29,11 @@ function topMostY(){
 export const Tiles = {
   reset(){
     rows.length = 0;
+    generationEnabled = true;
   },
   regen(){
     rows.length = 0;
+    generationEnabled = true;
     // Seed rows from bottom up so that last element is top-most offscreen
     let y = world.h + CONFIG.TILE.H/2;
     for (let i=0;i<20;i++){
@@ -50,12 +53,28 @@ export const Tiles = {
     }
     // add rows at top as needed
     let guard = 0;
-    while (topMostY() > -CONFIG.TILE.H/2 && guard++ < 200){
+    while (generationEnabled && topMostY() > -CONFIG.TILE.H/2 && guard++ < 200){
       newRow(topMostY() - CONFIG.TILE.H);
     }
   },
   draw(g){
     Theme.drawTiles(g, rows);
+  },
+  forceOpenArea(rowCount = 6){
+    const h = CONFIG.TILE.H;
+    const topY = -h * (Math.max(1, rowCount) - 0.5);
+    const bottomY = world.h + h * 0.5;
+    for (const r of rows){
+      if (r.y >= topY && r.y <= bottomY){
+        r.corridors = [{ x:0, w:world.w }];
+      }
+    }
+  },
+  setGenerationEnabled(enabled){
+    generationEnabled = !!enabled;
+  },
+  isCleared(){
+    return rows.length === 0;
   },
   isSafe(px, py){
     for (const r of rows){
