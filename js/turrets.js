@@ -124,6 +124,7 @@ export function update(dt){
 
     if (t.hp <= 0){
       Particles.spawnImpact(t.x, t.y, 'explosion', t.maxHp / 16);
+      world.enemyDestroyed = (world.enemyDestroyed | 0) + 1;
       turrets.splice(i, 1);
       continue;
     }

@@ -6,22 +6,121 @@
   <title>Rigs Rogue Walker — Refactor 2</title>
   <style>
     html, body { margin:0; padding:0; background:#fff; color:#000; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+    body { overflow:hidden; }
+    #gameFrame {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      aspect-ratio: 3 / 4;
+      width: min(100vw, calc(100vh * 0.75));
+      max-height: 100vh;
+      background: #fff;
+      border: 3px solid #000;
+      box-sizing: border-box;
+    }
     #hud { position:fixed; top:10px; left:10px; background:#000; color:#fff; padding:8px 10px; border-radius:8px; font-size:14px; }
     #controls { position:fixed; top:10px; right:10px; }
     #controls a { display:inline-block; padding:8px 12px; border-radius:8px; text-decoration:none; background:#000; color:#fff; margin-left:8px; }
-    canvas { display:block; width:100vw; height:100vh; }
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.72);
+      z-index: 11;
+    }
+    #splashCard {
+      width: min(94vw, 640px);
+      background: #fff;
+      color: #000;
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      border: 2px solid #000;
+    }
+    #splashTitle { margin: 0 0 10px; font-size: 34px; line-height: 1.1; }
+    #splashBody { font-size: 15px; line-height: 1.5; margin-bottom: 16px; }
+    #splashPlay {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      background: #000;
+      color: #fff;
+      font-weight: 600;
+    }
+    #gameOver {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.72);
+      z-index: 10;
+    }
+    #gameOverCard {
+      width: min(92vw, 520px);
+      background: #fff;
+      color: #000;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      border: 2px solid #000;
+    }
+    #gameOverTitle { margin: 0 0 6px; font-size: 28px; line-height: 1.1; }
+    #gameOverReason { margin: 0 0 12px; opacity: 0.8; }
+    #gameOverScore { font-size: 34px; font-weight: 800; margin-bottom: 4px; }
+    #gameOverMsg { margin-bottom: 12px; font-size: 15px; }
+    #gameOverStats { font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+    #playAgain {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      background: #000;
+      color: #fff;
+      font-weight: 600;
+    }
+    canvas { display:block; width:100%; height:100%; }
   </style>
 </head>
 <body>
     <div id="hud">
         Dist: <span id="scoreDist">0</span>
         &nbsp;&nbsp;|&nbsp;&nbsp;
+        Enemies: <span id="scoreEnemies">0</span>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
         IBS: <span id="scoreIBS">0</span>
     </div>
   <div id="controls">
     <a href="#" id="restart">Start ▶</a>
   </div>
-  <canvas id="game" width="1024" height="768"></canvas>
+  <div id="gameFrame">
+    <canvas id="game" width="768" height="1024"></canvas>
+  </div>
+  <div id="splash">
+    <div id="splashCard">
+      <h1 id="splashTitle">Rigs - Rogue Walker</h1>
+      <div id="splashBody">
+        <strong>Rules:</strong> See how far you can get, destroy enemies, while avoiding hurting any innocent bystanders.<br>
+        <strong>Controls:</strong> Use cursor keys to move, and mouse to target and shoot.<br>
+        <strong>Power-ups:</strong> Keep an eye out for power-ups to upgrade your Rig.
+      </div>
+      <a href="#" id="splashPlay">Play</a>
+    </div>
+  </div>
+  <div id="gameOver">
+    <div id="gameOverCard">
+      <h2 id="gameOverTitle">Game Over</h2>
+      <p id="gameOverReason">You were destroyed.</p>
+      <div id="gameOverScore">0</div>
+      <div id="gameOverMsg"></div>
+      <div id="gameOverStats"></div>
+      <a href="#" id="playAgain">Play Again</a>
+    </div>
+  </div>
 
   <script type="module">
     import { boot, wireUI } from './js/game.js';

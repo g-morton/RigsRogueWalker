@@ -5,6 +5,8 @@ import { Theme } from './theme.js';
 
 const items = [];
 let accPx = 0;
+let spawnCount = 0;
+let nextRepairAt = 5;
 
 const R = CONFIG.POWERUPS.RADIUS;
 
@@ -24,19 +26,61 @@ const UPGRADE_DROPS = [
   { key:'R', type:'upgrade', stat:'reloadMul' },
   { key:'M', type:'upgrade', stat:'speedMul' }
 ];
-const DROPS = [...SIDE_WEAPON_DROPS, ...UPGRADE_DROPS];
+const REPAIR_DROPS = [
+  { key:'HP', type:'repair', healFrac: CONFIG.POWERUPS.REPAIR_HEAL_FRAC ?? 0.35 }
+];
+const NON_REPAIR_DROPS = [...SIDE_WEAPON_DROPS, ...UPGRADE_DROPS];
+
+function scheduleNextRepair(){
+  const minN = Math.max(1, CONFIG.POWERUPS.REPAIR_GUARANTEE_MIN ?? 4);
+  const maxN = Math.max(minN, CONFIG.POWERUPS.REPAIR_GUARANTEE_MAX ?? 5);
+  const span = maxN - minN + 1;
+  nextRepairAt = spawnCount + minN + ((Math.random() * span) | 0);
+}
+
+function chooseDrop(){
+  const pl = world.player;
+  const maxHp = Math.max(1, pl?.maxHp ?? 1);
+  const hp = Math.max(0, Math.min(maxHp, pl?.hp ?? maxHp));
+  const hpRatio = hp / maxHp;
+  const damaged = hpRatio < 0.999;
+
+  // Guarantee a repair every 4-5 drops while damaged.
+  if (damaged && spawnCount >= nextRepairAt){
+    scheduleNextRepair();
+    return REPAIR_DROPS[0];
+  }
+
+  // Damage-aware repair weighting.
+  const base = CONFIG.POWERUPS.REPAIR_BASE_CHANCE ?? 0.08;
+  const bonusMax = CONFIG.POWERUPS.REPAIR_MAX_BONUS_CHANCE ?? 0.55;
+  const chance = damaged ? Math.min(0.9, base + (1 - hpRatio) * bonusMax) : Math.max(0, base * 0.15);
+  if (Math.random() < chance){
+    if (damaged) scheduleNextRepair();
+    return REPAIR_DROPS[0];
+  }
+
+  return NON_REPAIR_DROPS[(Math.random() * NON_REPAIR_DROPS.length) | 0];
+}
 
 function spawnOne(){
   const y = -R - 6;
+  spawnCount++;
+  const def = chooseDrop();
   // try to spawn on a safe corridor
   for (let i=0;i<24;i++){
     const x = 20 + Math.random()*(world.w-40);
-    if (Tiles.isSafe(x, y + 10)) { items.push({ x, y, def: DROPS[Math.floor(Math.random()*DROPS.length)] }); return; }
+    if (Tiles.isSafe(x, y + 10)) { items.push({ x, y, def }); return; }
   }
-  items.push({ x: world.w/2, y, def: DROPS[Math.floor(Math.random()*DROPS.length)] });
+  items.push({ x: world.w/2, y, def });
 }
 
-export function reset(){ items.length = 0; accPx = 0; }
+export function reset(){
+  items.length = 0;
+  accPx = 0;
+  spawnCount = 0;
+  scheduleNextRepair();
+}
 
 export function update(dt){
   const dy = world.dy;
@@ -76,6 +120,10 @@ function apply(def, p){
       case 'reloadMul':     p.reloadMul      = Math.max(0.4, p.reloadMul * 0.88); break;
       case 'damage':        p.damageMul      = Math.min(3.0, p.damageMul * 1.10); break;
     }
+  } else if (def.type === 'repair'){
+    const maxHp = Math.max(1, p.maxHp ?? 1);
+    const heal = maxHp * (def.healFrac ?? 0.35);
+    p.hp = Math.min(maxHp, (p.hp ?? maxHp) + heal);
   }
 }
 

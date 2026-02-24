@@ -7,8 +7,8 @@ export const CONFIG = {
     SMOKE: '#6f6f6f'
   },
   CANVAS: {
-    W: 1024,
-    H: 768
+    W: 768,
+    H: 1024
   },
   SCROLL: {
     // All scroll/movement rates are in pixels per second (px/s)
@@ -116,6 +116,11 @@ export const CONFIG = {
   },
   POWERUPS: {
     RADIUS: 16,
-    EVERY_ROWS: 5
+    EVERY_ROWS: 5,
+    REPAIR_HEAL_FRAC: 0.35,
+    REPAIR_BASE_CHANCE: 0.08,
+    REPAIR_MAX_BONUS_CHANCE: 0.55,
+    REPAIR_GUARANTEE_MIN: 4,
+    REPAIR_GUARANTEE_MAX: 5
   }
 };

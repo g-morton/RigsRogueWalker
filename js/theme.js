@@ -125,6 +125,86 @@ export const Theme = {
     g.fillStyle = INK; g.fill();
     g.lineWidth = 2; g.strokeStyle = BG; g.stroke();
 
+    if (it.def.type === 'repair'){
+      // Simple wrench-like icon for repair pickup.
+      g.save();
+      g.translate(it.x, it.y);
+      g.rotate(-0.55);
+      g.strokeStyle = BG;
+      g.lineWidth = 3;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(-7, 7);
+      g.lineTo(5, -5);
+      g.stroke();
+      g.beginPath();
+      g.arc(7, -7, 4, 0.15, Math.PI * 1.7);
+      g.stroke();
+      g.beginPath();
+      g.arc(-8, 8, 2, 0, Math.PI * 2);
+      g.stroke();
+      g.restore();
+      return;
+    }
+
+    if (it.def.type === 'upgrade'){
+      g.save();
+      g.translate(it.x, it.y);
+      g.strokeStyle = BG;
+      g.fillStyle = BG;
+      g.lineWidth = 2.2;
+      g.lineCap = 'round';
+      g.lineJoin = 'round';
+
+      switch(it.def.stat){
+        case 'damage':
+          // Burst / impact icon.
+          g.beginPath();
+          for (let i=0;i<8;i++){
+            const a = (i / 8) * Math.PI * 2;
+            const r0 = 2.5, r1 = 6.5;
+            g.moveTo(Math.cos(a)*r0, Math.sin(a)*r0);
+            g.lineTo(Math.cos(a)*r1, Math.sin(a)*r1);
+          }
+          g.stroke();
+          g.beginPath();
+          g.arc(0, 0, 2, 0, Math.PI*2);
+          g.fill();
+          break;
+        case 'speedMul':
+          // Double chevron up.
+          g.beginPath();
+          g.moveTo(-6, 4); g.lineTo(0, -3); g.lineTo(6, 4);
+          g.moveTo(-6, 9); g.lineTo(0, 2); g.lineTo(6, 9);
+          g.stroke();
+          break;
+        case 'reloadMul':
+          // Circular arrow (faster cycle / fire rate).
+          g.beginPath();
+          g.arc(0, 0, 6, Math.PI*0.2, Math.PI*1.75);
+          g.stroke();
+          g.beginPath();
+          g.moveTo(3, -7); g.lineTo(8, -7); g.lineTo(8, -2);
+          g.stroke();
+          break;
+        case 'projSpeedMul':
+          // Long arrow / velocity.
+          g.beginPath();
+          g.moveTo(-7, 0); g.lineTo(6, 0);
+          g.moveTo(2, -4); g.lineTo(7, 0); g.lineTo(2, 4);
+          g.stroke();
+          break;
+        default:
+          g.font = 'bold 14px monospace';
+          g.textAlign = 'center';
+          g.textBaseline = 'middle';
+          g.fillText(it.def.key || '?', 0, 1);
+          break;
+      }
+      g.restore();
+      return;
+    }
+
     const key = it.def.key;
     g.fillStyle = BG; g.textAlign = 'center'; g.textBaseline = 'middle';
     if (key.includes('-')){
@@ -358,6 +438,19 @@ drawIBSBubble(g, p, r){
     g.save();
     g.globalAlpha = Math.max(0, alpha);
 
+    if (s.mode === 'smear' && s.smear){
+      const sm = s.smear;
+      g.save();
+      g.translate(s.x, s.y);
+      g.rotate(sm.rot || 0);
+      g.fillStyle = CONFIG.COLORS.ACCENT;
+      g.beginPath();
+      g.ellipse(0, 0, sm.len * (1.0 + t * 0.12), sm.width * (1.0 + t * 0.08), 0, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+      g.globalAlpha *= 0.85;
+    }
+
     // base smeared circle
     //g.beginPath();
     //g.arc(s.x, s.y, 8 + t*6, 0, Math.PI*2);
@@ -409,6 +502,18 @@ drawIBSBubble(g, p, r){
     } else if (p.type === 'smoke'){
       g.beginPath(); g.arc(p.x, p.y, 4.8, 0, Math.PI*2);
       g.fillStyle = SMOKE; g.fill();
+    } else if (p.type === 'botPart'){
+      g.save();
+      g.translate(p.x, p.y);
+      g.rotate(p.angle || 0);
+      const w = p.w || 8;
+      const h = p.h || 6;
+      g.fillStyle = INK;
+      g.fillRect(-w/2, -h/2, w, h);
+      g.lineWidth = 1.2;
+      g.strokeStyle = BG;
+      g.strokeRect(-w/2, -h/2, w, h);
+      g.restore();
     } else if (p.type === 'damage' || p.type === 'explosion'){
       g.beginPath(); g.arc(p.x, p.y, 1.5, 0, Math.PI*2);
       g.fillStyle = INK; g.fill();

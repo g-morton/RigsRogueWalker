@@ -21,6 +21,7 @@ const LINES = [
 // ---------------------------------------------------------------------------
 // Utils
 function rand(a,b){ return a + Math.random()*(b-a); }
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
 function playerOverlapsIBS(p){
   const pl = world.player;
@@ -31,18 +32,41 @@ function playerOverlapsIBS(p){
 }
 
 // Build a messy splat composed of overlapping circles
-function makeSplat(x, y){
+function makeSplat(x, y, opts = {}){
+  const mode = opts.mode || 'impact';
+  const damage = Math.max(1, opts.damage ?? 1);
+  const vx = opts.dirX ?? 0;
+  const vy = opts.dirY ?? -1;
+  const vm = Math.hypot(vx, vy) || 1;
+  const nx = vx / vm, ny = vy / vm;
+
   const blobs = [];
-  const n = 3 + (Math.random()*4|0); // 3–6 blobs (smaller than before)
-  for (let i=0;i<n;i++){
-    const ang  = Math.random() * Math.PI * 2;
-    const dist = Math.random() * 10;
-    const bx = x + Math.cos(ang)*dist;
-    const by = y + Math.sin(ang)*dist;
-    const r  = 3 + Math.random() * 10; // smaller blobs
+  if (mode === 'smear'){
+    const len = 18 + Math.random() * 20;
+    const width = 5 + Math.random() * 5;
+    const rot = (Math.random() - 0.5) * 0.45;
+    const n = 2 + (Math.random() * 2 | 0);
+    for (let i = 0; i < n; i++){
+      const bx = x + (Math.random() - 0.5) * len * 0.4;
+      const by = y + (Math.random() - 0.5) * width * 1.8;
+      const r = 3 + Math.random() * 5;
+      blobs.push({ x: bx, y: by, r });
+    }
+    return { x, y, t:0, life:5.0, mode:'smear', smear:{ len, width, rot }, blobs, scrollY:y };
+  }
+
+  const spread = clamp(0.7 + damage / 22, 0.8, 3.5);
+  const n = 4 + (Math.random() * (5 + spread * 2) | 0);
+  for (let i = 0; i < n; i++){
+    const forward = 2 + Math.random() * (18 * spread);
+    const lateral = (Math.random() - 0.5) * (10 * spread);
+    const jitter = Math.random() * 3 * spread;
+    const bx = x + (nx * forward) + (-ny * lateral) + (Math.random() - 0.5) * jitter;
+    const by = y + (ny * forward) + ( nx * lateral) + (Math.random() - 0.5) * jitter;
+    const r = 2.5 + Math.random() * (5 + spread * 1.7);
     blobs.push({ x:bx, y:by, r });
   }
-  return { x, y, t:0, life:6.0, blobs, scrollY:y };
+  return { x, y, t:0, life:6.2, mode:'impact', blobs, scrollY:y };
 }
 
 // Try to spawn one IBS on a safe corridor; fallback center if none found
@@ -153,8 +177,8 @@ export function update(dt){
 
     // 1) Player stomp (squash)
     if (playerOverlapsIBS(p)){
-      Particles.spawnImpact(p.x, p.y, 'blood');
-      splats.push(makeSplat(p.x, p.y));
+      Particles.spawnImpact(p.x, p.y, 'blood', 0.55);
+      splats.push(makeSplat(p.x, p.y, { mode:'smear' }));
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
       continue;
@@ -164,14 +188,29 @@ export function update(dt){
     Projectiles.consumeHitsCircle(p.x, p.y, cfg.R, (proj)=>{
       const damage = Math.max(1, proj.damage ?? 1);
       p.hp -= damage;
-      Particles.spawnImpact(proj.x, proj.y, 'blood', damage / 10);
-      // Rockets should pierce through IBS instead of being blocked.
-      return proj.type !== 'rocket';
+      p.lastHit = { damage, vx: proj.vx, vy: proj.vy };
+      Particles.spawnImpact(
+        proj.x, proj.y, 'blood',
+        Math.max(0.45, damage / 9),
+        { directional: true, dirX: proj.vx, dirY: proj.vy }
+      );
+      // Heavy rounds should pierce through IBS instead of being blocked.
+      return proj.type !== 'rocket' && proj.type !== 'cannon';
     });
 
     if (p.hp <= 0){
-      Particles.spawnImpact(p.x, p.y, 'blood', p.maxHp / 8);
-      splats.push(makeSplat(p.x, p.y));
+      const hit = p.lastHit || { damage: 1, vx: 0, vy: -1 };
+      Particles.spawnImpact(
+        p.x, p.y, 'blood',
+        Math.max(0.6, hit.damage / 7),
+        { directional: true, dirX: hit.vx, dirY: hit.vy }
+      );
+      splats.push(makeSplat(p.x, p.y, {
+        mode: 'impact',
+        damage: hit.damage,
+        dirX: hit.vx,
+        dirY: hit.vy
+      }));
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
       continue;
@@ -208,4 +247,5 @@ export function drawBubbles(g){
 }
 
 export const IBS = { reset, update, draw, drawBubbles };
+
 

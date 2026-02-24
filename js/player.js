@@ -26,18 +26,24 @@ export class Player{
     this.hp = this.maxHp;
     this.fxSparkT = 0;
     this.fxSmokeT = 0;
+    this.dead = false;
+    this.deathT = 0;
   }
 
   update(dt){
+    if (this.dead){
+      this.deathT = Math.max(0, this.deathT - dt);
+      return;
+    }
+
     const sp = (CONFIG.PLAYER.MOVE_PX_PER_SEC * this.speedMul) * dt;
-    if (keys.has('ArrowLeft')) this.x -= sp;
-    if (keys.has('ArrowRight')) this.x += sp;
-    if (keys.has('ArrowUp')) this.y -= sp;
-    if (keys.has('ArrowDown')) this.y += sp;
+    if (keys.has('ArrowLeft') || keys.has('a') || keys.has('A')) this.x -= sp;
+    if (keys.has('ArrowRight') || keys.has('d') || keys.has('D')) this.x += sp;
+    if (keys.has('ArrowUp') || keys.has('w') || keys.has('W')) this.y -= sp;
+    if (keys.has('ArrowDown') || keys.has('s') || keys.has('S')) this.y += sp;
 
     this.x = clamp(this.x, 14, world.w-14);
-    const minY = Math.floor(world.h*(2/3));
-    this.y = Math.max(minY, Math.min(Math.floor(world.h*0.95), this.y));
+    this.y = clamp(this.y, 14, world.h - 14);
 
     // walking time
     this.t += dt * (CONFIG.PLAYER.BASE_STEP || 1.0);
@@ -65,8 +71,14 @@ export class Player{
       this.fxSparkT = 0.12 + Math.random() * 0.2;
     }
     if (hpRatio <= 0.5 && this.fxSmokeT <= 0){
-      Particles.spawnImpact(this.x + (Math.random()*14 - 7), this.y - 16 + (Math.random()*10 - 5), 'smoke', 0.55);
-      this.fxSmokeT = 0.22 + Math.random() * 0.3;
+      const heavy = hpRatio <= 0.25;
+      Particles.spawnImpact(
+        this.x + (Math.random()*14 - 7),
+        this.y - 16 + (Math.random()*10 - 5),
+        'smoke',
+        heavy ? 1.35 : 0.55
+      );
+      this.fxSmokeT = heavy ? (0.06 + Math.random() * 0.08) : (0.22 + Math.random() * 0.3);
     }
 
     // Chaingun autofire while mouse button is held.
@@ -75,6 +87,7 @@ export class Player{
   }
 
   draw(g){
+    if (this.dead) return;
     Theme.drawPlayer(g, this);
   }
 
@@ -84,6 +97,7 @@ export class Player{
   }
 
   fire(side){
+    if (this.dead) return;
     const type = this.weapons[side];
     if (!type) return;
     if (this.cooldown[side] > 0) return;
@@ -106,6 +120,17 @@ export class Player{
       damageMul: this.damageMul
     });
     this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
+  }
+
+  destroy(){
+    if (this.dead) return;
+    this.dead = true;
+    this.deathT = 1.1;
+    Particles.spawnBotExplosion(this.x, this.y - 6, 1.4);
+  }
+
+  isDeathAnimDone(){
+    return this.dead && this.deathT <= 0;
   }
 }
 

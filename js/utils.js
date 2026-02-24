@@ -17,7 +17,8 @@ export const world = {
   dy: 0,
   player: null,
   // HUD counters (read by hud.js)
-  ibsHit: 0
+  ibsHit: 0,
+  enemyDestroyed: 0
 };
 
 export function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
