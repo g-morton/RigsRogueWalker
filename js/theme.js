@@ -119,6 +119,107 @@ export const Theme = {
     g.restore();
   },
 
+  drawFloatBoss(g, b){
+    g.save();
+    g.translate(b.x, b.y);
+
+    // Simple off-center shadow to sell hovering.
+    g.save();
+    g.translate(b.shadowOffsetX || 0, (b.h || 60) * 0.62);
+    g.scale(1.15, 0.42);
+    g.beginPath();
+    g.arc(0, 0, (b.w || 120) * 0.36, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(90,90,90,0.45)';
+    g.fill();
+    g.restore();
+
+    // Main hull.
+    const hw = (b.w || 120) * 0.5;
+    const hh = (b.h || 70) * 0.5;
+    g.fillStyle = INK;
+    g.fillRect(-hw, -hh, hw * 2, hh * 2);
+    g.lineWidth = 2;
+    g.strokeStyle = BG;
+    g.strokeRect(-hw + 1, -hh + 1, hw * 2 - 2, hh * 2 - 2);
+
+    // Panel lines + rivet dots to break up large flat surfaces.
+    g.lineWidth = 1;
+    g.strokeStyle = BG;
+    g.beginPath();
+    g.moveTo(-hw * 0.75, -hh * 0.1);
+    g.lineTo(hw * 0.75, -hh * 0.1);
+    g.moveTo(-hw * 0.65, hh * 0.28);
+    g.lineTo(hw * 0.65, hh * 0.28);
+    g.stroke();
+    for (let i = 0; i < 7; i++){
+      const rx = -hw * 0.75 + (i / 6) * hw * 1.5;
+      g.beginPath();
+      g.arc(rx, -hh * 0.44, 1.2, 0, Math.PI * 2);
+      g.fillStyle = BG;
+      g.fill();
+    }
+
+    // Random primitive add-ons.
+    for (const d of (b.deco || [])){
+      if (d.kind === 'rect'){
+        g.fillStyle = INK;
+        g.fillRect(d.ox - d.w/2, d.oy - d.h/2, d.w, d.h);
+        g.lineWidth = 1.2;
+        g.strokeStyle = BG;
+        g.strokeRect(d.ox - d.w/2, d.oy - d.h/2, d.w, d.h);
+      } else if (d.kind === 'antenna'){
+        g.lineWidth = 2;
+        g.strokeStyle = INK;
+        g.beginPath();
+        g.moveTo(d.ox, d.oy);
+        g.lineTo(d.ox, d.oy - d.len);
+        g.stroke();
+        g.beginPath();
+        g.arc(d.ox, d.oy - d.len, 2.3, 0, Math.PI * 2);
+        g.fillStyle = BG;
+        g.fill();
+      } else if (d.kind === 'pod'){
+        g.beginPath();
+        g.arc(d.ox, d.oy, d.r, 0, Math.PI * 2);
+        g.fillStyle = INK;
+        g.fill();
+        g.lineWidth = 1.2;
+        g.strokeStyle = BG;
+        g.stroke();
+      } else if (d.kind === 'slot'){
+        g.fillStyle = BG;
+        g.fillRect(d.ox - d.w/2, d.oy - d.h/2, d.w, d.h);
+      }
+    }
+
+    // Mount turrets and muzzle ports.
+    for (const m of (b.mounts || [])){
+      if (!m.alive){
+        g.beginPath();
+        g.arc(m.ox, m.oy, 2.2, 0, Math.PI * 2);
+        g.fillStyle = BG;
+        g.fill();
+        continue;
+      }
+      g.save();
+      g.translate(m.ox, m.oy);
+      g.rotate(Math.PI/4);
+      const s = m.size || 6;
+      g.fillStyle = INK;
+      g.fillRect(-s, -s, s*2, s*2);
+      g.lineWidth = 1.4;
+      g.strokeStyle = BG;
+      g.strokeRect(-s + 0.8, -s + 0.8, s*2 - 1.6, s*2 - 1.6);
+      g.restore();
+      g.beginPath();
+      g.arc(m.ox, m.oy, Math.max(1.8, (m.size || 6) * 0.32), 0, Math.PI * 2);
+      g.fillStyle = BG;
+      g.fill();
+    }
+
+    g.restore();
+  },
+
   drawEnemyBullet(g, s){
     g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI*2);
     g.fillStyle = BLUE; g.fill();

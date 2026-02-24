@@ -122,7 +122,29 @@ export const CONFIG = {
     TURRET_TYPE: 'large',
     HP_MULT: 4.0,
     SIZE_MULT: 1.5,
-    ARENA_ROWS: 7
+    ARENA_ROWS: 7,
+    TYPE_POOL: ['float'],
+    FLOAT: {
+      HP_BASE: 220,
+      HP_PER_LEVEL: 85,
+      W_MIN: 110,
+      W_MAX: 180,
+      H_MIN: 60,
+      H_MAX: 92,
+      STOP_Y_FRAC: 0.26,
+      HOVER_X_MIN: 28,
+      HOVER_X_MAX: 55,
+      HOVER_Y_MIN: 6,
+      HOVER_Y_MAX: 18,
+      HOVER_SPEED_MIN: 0.7,
+      HOVER_SPEED_MAX: 1.25,
+      COOLDOWN_LEVEL_REDUCE: 0.045,
+      MOUNTS_MIN: 3,
+      MOUNTS_MAX: 6,
+      LARGE_MOUNT_CHANCE: 0.32,
+      DECO_MIN: 10,
+      DECO_MAX: 20
+    }
   },
   POWERUPS: {
     RADIUS: 16,

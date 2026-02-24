@@ -7,6 +7,7 @@ import { Projectiles } from './projectiles.js';
 import { Particles } from './particles.js';
 import { Powerups } from './powerups.js';
 import { Turrets } from './turrets.js';
+import { Bosses } from './bosses.js';
 import { IBS } from './ibs.js';
 import { HUD } from './hud.js';
 import { SFX } from './sfx.js';
@@ -16,6 +17,11 @@ let player = null;
 let rafId = null;
 let loopSeq = 0;
 let bossPhase = 'none'; // none | clearing | approach | fight
+
+function currentBossLevel(){
+  const interval = Math.max(1, CONFIG.BOSS?.INTERVAL_DIST ?? 5000);
+  return Math.max(1, Math.floor((world.nextBossDist | 0) / interval));
+}
 
 function evaluateRun(){
   const distance = (world.dist | 0);
@@ -58,14 +64,14 @@ function maybeAdvanceBossSequence(){
       !Turrets.hasActiveNonBoss?.();
     if (clear){
       HUD.showBossBanner?.('Boss Approaching', 1500);
-      Turrets.startBoss?.(CONFIG.BOSS?.TURRET_TYPE ?? 'large', { fromTop: true });
+      Bosses.startEncounter?.(currentBossLevel(), { fromTop: true });
       bossPhase = 'approach';
     }
     return;
   }
 
   if (bossPhase === 'approach'){
-    const boss = Turrets.getBossStatus?.();
+    const boss = Bosses.getStatus?.();
     if (boss?.entered){
       bossPhase = 'fight';
     }
@@ -73,7 +79,7 @@ function maybeAdvanceBossSequence(){
   }
 
   if (bossPhase !== 'fight') return;
-  if (Turrets.hasActiveBoss?.()) return;
+  if (Bosses.hasActiveBoss?.()) return;
   const interval = Math.max(1, CONFIG.BOSS?.INTERVAL_DIST ?? 5000);
   world.bossActive = false;
   world.spawnLocked = false;
@@ -111,7 +117,8 @@ function startRAF(){
     Powerups.update(dt); Powerups.draw(ctx);
     IBS.update(dt); IBS.draw(ctx);
     Turrets.update(dt); Turrets.draw(ctx);
-    const boss = Turrets.getBossStatus?.();
+    Bosses.update(dt); Bosses.draw(ctx);
+    const boss = Bosses.getStatus?.();
     if (bossPhase === 'fight' && boss) HUD.setBossBar?.(boss.hp, boss.maxHp);
     else HUD.setBossBar?.(0, 1);
     player.update(dt);
@@ -149,7 +156,7 @@ export function startGame(){
   world.running = false; world.dist = 0; world.dy = 0; world.ibsHit = 0; world.enemyDestroyed = 0; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
-  Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Particles.reset?.();
+  Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Bosses.reset?.(); Particles.reset?.();
 
   player = new Player(); world.player = player;
 
@@ -169,7 +176,7 @@ export function boot(){
   world.running = false; world.dist = 0; world.dy = 0; world.enemyDestroyed = 0; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
-  Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Particles.reset?.();
+  Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Bosses.reset?.(); Particles.reset?.();
 
   if (!player){ player = new Player(); world.player = player; }
   HUD.showSplash?.();
@@ -181,6 +188,7 @@ export function boot(){
   Tiles.draw(ctx);
   Powerups.draw(ctx);
   Turrets.draw(ctx);
+  Bosses.draw(ctx);
   player.draw(ctx);
   IBS.drawBubbles?.(ctx);
 
