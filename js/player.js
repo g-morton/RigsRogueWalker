@@ -6,6 +6,7 @@ import { Particles } from './particles.js';
 import { getMuzzleLocal, getCooldownSec } from './weapons.js';
 
 const MAX_TWIST = CONFIG.PLAYER.TWIST_DEG * Math.PI/180;
+const MAX_TWIST_CANVAS = (CONFIG.PLAYER.TWIST_DEG_CANVAS ?? CONFIG.PLAYER.TWIST_DEG) * Math.PI/180;
 
 export class Player{
   constructor(){
@@ -50,12 +51,21 @@ export class Player{
 
     // aim at mouse (canvas-relative), straight up is 0
     const rect = canvas.getBoundingClientRect();
-    const mx = mouse.x - rect.left;
-    const my = mouse.y - rect.top;
+    const cx = mouse.x - rect.left;
+    const cy = mouse.y - rect.top;
+    const insideCanvas = (cx >= 0 && cx <= rect.width && cy >= 0 && cy <= rect.height);
+
+    // Convert from CSS pixel space to game world pixel space.
+    const mx = cx * (world.w / Math.max(1, rect.width));
+    const my = cy * (world.h / Math.max(1, rect.height));
     const absolute = Math.atan2(my - this.y, mx - this.x);
     const relative = absolute + Math.PI/2;
-    const limited = Math.max(-MAX_TWIST, Math.min(MAX_TWIST, relative));
-    this.angle += (limited - this.angle) * 0.15;
+    const maxTwist = insideCanvas ? MAX_TWIST_CANVAS : MAX_TWIST;
+    const twistLerp = insideCanvas
+      ? (CONFIG.PLAYER.TWIST_LERP_CANVAS ?? 0.24)
+      : (CONFIG.PLAYER.TWIST_LERP ?? 0.15);
+    const limited = Math.max(-maxTwist, Math.min(maxTwist, relative));
+    this.angle += (limited - this.angle) * twistLerp;
 
     // cooldown tick
     this.cooldown.left = Math.max(0, this.cooldown.left - dt);

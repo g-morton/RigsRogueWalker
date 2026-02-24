@@ -8,17 +8,18 @@ export function reset(){
 }
 
 export function spawnImpact(x, y, type = 'playerShot', amount = 1, opts = {}){
-  // type: 'blood' | 'damage' | 'explosion' | 'playerShot' | 'enemyShot' | 'warnSpark' | 'smoke'
+  // type: 'blood' | 'damage' | 'explosion' | 'playerShot' | 'enemyShot' | 'warnSpark' | 'smoke' | 'pickupFlash'
   const isExplosion = (type === 'explosion');
   const isDamage = (type === 'damage');
   const isBlood = (type === 'blood');
   const isEnemyShot = (type === 'enemyShot');
   const isWarnSpark = (type === 'warnSpark');
   const isSmoke = (type === 'smoke');
+  const isPickupFlash = (type === 'pickupFlash');
 
-  const baseCount = isExplosion ? 20 : (isDamage ? 14 : (isBlood ? 10 : (isEnemyShot ? 10 : (isWarnSpark ? 5 : (isSmoke ? 4 : 8)))));
-  const baseSpeed = isExplosion ? 220 : (isDamage ? 170 : (isBlood ? 140 : (isEnemyShot ? 130 : (isWarnSpark ? 95 : (isSmoke ? 42 : 120)))));
-  const baseLife  = isExplosion ? 0.8 : (isDamage ? 0.65 : (isBlood ? 0.5 : (isEnemyShot ? 0.5 : (isWarnSpark ? 0.32 : (isSmoke ? 0.95 : 0.4)))));
+  const baseCount = isExplosion ? 20 : (isDamage ? 14 : (isBlood ? 10 : (isEnemyShot ? 10 : (isWarnSpark ? 5 : (isSmoke ? 4 : (isPickupFlash ? 10 : 8))))));
+  const baseSpeed = isExplosion ? 220 : (isDamage ? 170 : (isBlood ? 140 : (isEnemyShot ? 130 : (isWarnSpark ? 95 : (isSmoke ? 42 : (isPickupFlash ? 90 : 120))))));
+  const baseLife  = isExplosion ? 0.8 : (isDamage ? 0.65 : (isBlood ? 0.5 : (isEnemyShot ? 0.5 : (isWarnSpark ? 0.32 : (isSmoke ? 0.95 : (isPickupFlash ? 0.23 : 0.4))))));
   const intensity = Math.max(0.35, Math.min(3.0, amount));
   const count = Math.max(4, Math.round(baseCount * intensity));
   const speed = baseSpeed * (0.85 + intensity * 0.3);

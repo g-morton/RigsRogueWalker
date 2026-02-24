@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { world } from './utils.js';
 import { Tiles } from './tiles.js';
 import { Theme } from './theme.js';
+import { Particles } from './particles.js';
 
 const items = [];
 let accPx = 0;
@@ -99,6 +100,7 @@ export function update(dt){
       const it = items[i];
       const dx = it.x - p.x, dy = it.y - p.y;
       if (dx*dx + dy*dy <= (R+18)*(R+18)){
+        Particles.spawnImpact(it.x, it.y, 'pickupFlash', 1.0);
         apply(it.def, p);
         items.splice(i,1);
       }

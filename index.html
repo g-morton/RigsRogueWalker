@@ -19,6 +19,29 @@
       border: 3px solid #000;
       box-sizing: border-box;
     }
+    #powerKey {
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 0;
+      width: 210px;
+      background: #fff;
+      color: #000;
+      border: 2px solid #000;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      box-sizing: border-box;
+    }
+    #powerKey h3 { margin: 0 0 6px; font-size: 14px; }
+    #powerKey p { margin: 2px 0; }
+    @media (max-width: 1120px){
+      #powerKey{
+        left: 0;
+        top: calc(100% + 10px);
+        width: min(92vw, 320px);
+      }
+    }
     #hud { position:fixed; top:10px; left:10px; background:#000; color:#fff; padding:8px 10px; border-radius:8px; font-size:14px; }
     #controls { position:fixed; top:10px; right:10px; }
     #controls a { display:inline-block; padding:8px 12px; border-radius:8px; text-decoration:none; background:#000; color:#fff; margin-left:8px; }
@@ -99,6 +122,16 @@
   </div>
   <div id="gameFrame">
     <canvas id="game" width="768" height="1024"></canvas>
+    <aside id="powerKey">
+      <h3>Power-ups</h3>
+      <p><strong>D</strong> Damage up</p>
+      <p><strong>F</strong> Projectile speed up</p>
+      <p><strong>R</strong> Fire rate up</p>
+      <p><strong>M</strong> Move speed up</p>
+      <p><strong>HP</strong> Repair</p>
+      <p><strong>L-*</strong> Left weapon swap</p>
+      <p><strong>R-*</strong> Right weapon swap</p>
+    </aside>
   </div>
   <div id="splash">
     <div id="splashCard">
