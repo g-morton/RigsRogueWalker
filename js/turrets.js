@@ -5,6 +5,7 @@ import { Tiles } from './tiles.js';
 import { Theme } from './theme.js';
 import { Projectiles } from './projectiles.js'; // player shots
 import { Particles } from './particles.js';     // impact effects
+import { SFX } from './sfx.js';
 
 // --- State -------------------------------------------------------------------
 const turrets = [];   // { x, y, type, size, cool, hp, maxHp, fxSparkT, fxSmokeT }
@@ -120,10 +121,12 @@ export function update(dt){
       t.hp -= damage;
       Particles.spawnImpact(proj.x, proj.y, 'playerShot', 0.6);
       Particles.spawnImpact(proj.x, proj.y, 'damage', damage / 12);
+      SFX.playHit?.(damage);
     });
 
     if (t.hp <= 0){
       Particles.spawnImpact(t.x, t.y, 'explosion', t.maxHp / 16);
+      SFX.playEnemyExplode?.();
       world.enemyDestroyed = (world.enemyDestroyed | 0) + 1;
       turrets.splice(i, 1);
       continue;
@@ -165,6 +168,7 @@ export function update(dt){
         const damage = Math.max(1, s.damage ?? 1);
         world.player.hp = Math.max(0, (world.player.hp ?? world.player.maxHp ?? 1) - damage);
         Particles.spawnImpact(s.x, s.y, 'damage');
+        SFX.playHit?.(damage);
         shots.splice(i, 1);
         // Optional: apply `s.damage` to player HP system here.
       }

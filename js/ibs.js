@@ -5,6 +5,7 @@ import { Tiles } from './tiles.js';
 import { Theme } from './theme.js';
 import { Particles } from './particles.js';
 import { Projectiles } from './projectiles.js';
+import { SFX } from './sfx.js';
 
 // ---------------------------------------------------------------------------
 // State
@@ -179,6 +180,7 @@ export function update(dt){
     if (playerOverlapsIBS(p)){
       Particles.spawnImpact(p.x, p.y, 'blood', 0.55);
       splats.push(makeSplat(p.x, p.y, { mode:'smear' }));
+      SFX.playIbsSplat?.();
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
       continue;
@@ -211,6 +213,7 @@ export function update(dt){
         dirX: hit.vx,
         dirY: hit.vy
       }));
+      SFX.playIbsSplat?.();
       ibs.splice(i,1);
       world.ibsHit = (world.ibsHit|0) + 1;
       continue;

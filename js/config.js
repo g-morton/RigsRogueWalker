@@ -125,5 +125,8 @@ export const CONFIG = {
     REPAIR_MAX_BONUS_CHANCE: 0.55,
     REPAIR_GUARANTEE_MIN: 4,
     REPAIR_GUARANTEE_MAX: 5
+  },
+  SFX: {
+    IBS_SPLAT_COUNT: 4
   }
 };
