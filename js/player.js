@@ -3,6 +3,7 @@ import { world, canvas, clamp } from './utils.js';
 import { Theme } from './theme.js';
 import { Projectiles } from './projectiles.js';
 import { Particles } from './particles.js';
+import { SFX } from './sfx.js';
 import { getMuzzleLocal, getCooldownSec } from './weapons.js';
 
 const MAX_TWIST = CONFIG.PLAYER.TWIST_DEG * Math.PI/180;
@@ -129,6 +130,7 @@ export class Player{
       speedMul: this.projSpeedMul,
       damageMul: this.damageMul
     });
+    SFX.playShot(type);
     this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
   }
 

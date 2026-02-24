@@ -9,6 +9,7 @@ import { Powerups } from './powerups.js';
 import { Turrets } from './turrets.js';
 import { IBS } from './ibs.js';
 import { HUD } from './hud.js';
+import { SFX } from './sfx.js';
 
 let lastT = 0;
 let player = null;
@@ -139,6 +140,7 @@ export function gameOver(msg){
 
 export function wireUI(){
   HUD.init();
+  SFX.warmup?.();
   // Prevent browser context menu from interrupting right-click fire.
   window.addEventListener('contextmenu', (e)=>{ e.preventDefault(); });
   const btn = document.getElementById('restart');
