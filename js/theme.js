@@ -53,8 +53,14 @@ export const Theme = {
     g.fillRect(headX, headY, P.HEAD, P.HEAD);
 
     // weapon mounts
-    if (p.weapons.left)  drawWeapon(g, -P.MOUNT_OFFSET_X, P.MOUNT_OFFSET_Y, 'left', p.weapons.left);
-    if (p.weapons.right) drawWeapon(g,  P.MOUNT_OFFSET_X, P.MOUNT_OFFSET_Y, 'right', p.weapons.right);
+    if (p.weapons.left){
+      const heatL = p.chaingun?.left?.heat ?? 0;
+      drawWeapon(g, -P.MOUNT_OFFSET_X, P.MOUNT_OFFSET_Y, 'left', p.weapons.left, heatL);
+    }
+    if (p.weapons.right){
+      const heatR = p.chaingun?.right?.heat ?? 0;
+      drawWeapon(g,  P.MOUNT_OFFSET_X, P.MOUNT_OFFSET_Y, 'right', p.weapons.right, heatR);
+    }
 
     g.restore();
   },
@@ -123,14 +129,14 @@ export const Theme = {
     g.save();
     g.translate(b.x, b.y);
 
-    // Simple off-center shadow to sell hovering.
+    // Off-center rectangular shadow matching hull footprint size.
     g.save();
-    g.translate(b.shadowOffsetX || 0, (b.h || 60) * 0.62);
-    g.scale(1.15, 0.42);
-    g.beginPath();
-    g.arc(0, 0, (b.w || 120) * 0.36, 0, Math.PI * 2);
+    g.translate((b.shadowOffsetX || 0) * 1.15, (b.h || 60) * 0.80);
+    const sw = (b.w || 120) * 1.08;
+    const sh = (b.h || 70) * 1.08;
+    g.scale(1.0, 0.24);
     g.fillStyle = 'rgba(90,90,90,0.45)';
-    g.fill();
+    g.fillRect(-sw * 0.5, -sh * 0.5, sw, sh);
     g.restore();
 
     // Main hull.
@@ -540,6 +546,18 @@ drawIBSBubble(g, p, r){
       g.strokeStyle = BG;
       g.strokeRect(-w/2, -h/2, w, h);
       g.restore();
+    } else if (p.type === 'shell'){
+      g.save();
+      g.translate(p.x, p.y);
+      g.rotate(p.angle || 0);
+      const w = p.w || 5;
+      const h = p.h || 2.6;
+      g.fillStyle = '#b58a3c';
+      g.fillRect(-w/2, -h/2, w, h);
+      g.lineWidth = 1;
+      g.strokeStyle = INK;
+      g.strokeRect(-w/2, -h/2, w, h);
+      g.restore();
     } else if (p.type === 'pickupFlash'){
       const t2 = p.t / Math.max(0.001, p.life);
       const rr = 2 + t2 * 8;
@@ -567,10 +585,12 @@ drawIBSBubble(g, p, r){
 };
 
 // weapon visuals
-function drawWeapon(g, ax, ay, side, type){
+function drawWeapon(g, ax, ay, side, type, heat = 0){
   const s = side === 'left' ? -1 : 1;
   g.save(); g.translate(ax, ay); g.scale(s,1);
-  g.fillStyle = CONFIG.COLORS.INK;
+  const h = Math.max(0, Math.min(1, heat || 0));
+  const heatColor = `rgb(${Math.round(224 * h)},0,0)`;
+  g.fillStyle = (type === 'chaingun') ? heatColor : CONFIG.COLORS.INK;
   switch(type){
     case 'rifle':
       g.fillRect(-4, -14, 6, 30);

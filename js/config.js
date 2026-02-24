@@ -45,7 +45,12 @@ export const CONFIG = {
   },
   WEAPONS: {
     rifle:   { cooldown: 0.18, muzzle:{x:6, y:-12} },
-    chaingun:{ cooldown: 0.08, muzzle:{x:0, y:-60} },
+    chaingun:{
+      cooldown: 0.08, muzzle:{x:0, y:-60},
+      windup: 0.85,
+      heatPerSec: 0.35,
+      coolPerSec: 0.25
+    },
     cannon:  { cooldown: 0.50, muzzle:{x:18,y:-2}  },
     rocket:  { cooldown: 0.90, muzzle:{x:0, y:-18} }
   },
@@ -127,10 +132,10 @@ export const CONFIG = {
     FLOAT: {
       HP_BASE: 220,
       HP_PER_LEVEL: 85,
-      W_MIN: 110,
-      W_MAX: 180,
-      H_MIN: 60,
-      H_MAX: 92,
+      W_MIN: 72,
+      W_MAX: 118,
+      H_MIN: 120,
+      H_MAX: 186,
       STOP_Y_FRAC: 0.26,
       HOVER_X_MIN: 28,
       HOVER_X_MAX: 55,
@@ -156,6 +161,9 @@ export const CONFIG = {
     REPAIR_GUARANTEE_MAX: 5
   },
   SFX: {
-    IBS_SPLAT_COUNT: 4
+    IBS_SPLAT_COUNT: 9,
+    ENEMY_EXPLODE_COUNT: 8,
+    HIT_SMALL_COUNT: 4,
+    HIT_BIG_COUNT: 4
   }
 };

@@ -16,8 +16,12 @@ export class Player{
     this.t = 0;
     this.angle = 0;
 
-    this.weapons = { left: 'rifle', right: 'rifle' };
+    this.weapons = { left: 'chaingun', right: 'cannon' };
     this.cooldown = { left: 0, right: 0 };
+    this.chaingun = {
+      left:  { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false },
+      right: { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false }
+    };
 
     this.speedMul = 1.0;
     this.reloadMul = 1.0;
@@ -92,9 +96,9 @@ export class Player{
       this.fxSmokeT = heavy ? (0.06 + Math.random() * 0.08) : (0.22 + Math.random() * 0.3);
     }
 
-    // Chaingun autofire while mouse button is held.
-    if (mouse.leftDown && this.weapons.left === 'chaingun') this.fire('left');
-    if (mouse.rightDown && this.weapons.right === 'chaingun') this.fire('right');
+    // Chaingun state machine: windup -> sustain fire -> overheat -> cooldown.
+    this.updateChaingun('left', mouse.leftDown, dt);
+    this.updateChaingun('right', mouse.rightDown, dt);
   }
 
   draw(g){
@@ -110,6 +114,14 @@ export class Player{
   fire(side){
     if (this.dead) return;
     const type = this.weapons[side];
+    if (!type) return;
+    if (type === 'chaingun') return;
+    if (this.cooldown[side] > 0) return;
+    this.shoot(side, type);
+  }
+
+  shoot(side, type){
+    if (this.dead) return;
     if (!type) return;
     if (this.cooldown[side] > 0) return;
 
@@ -130,8 +142,96 @@ export class Player{
       speedMul: this.projSpeedMul,
       damageMul: this.damageMul
     });
+    if (type === 'chaingun'){
+      const rightX = Math.cos(a);
+      const rightY = Math.sin(a);
+      const outX = rightX * s;
+      const outY = rightY * s;
+      const forwardX = Math.sin(a);
+      const forwardY = -Math.cos(a);
+      // Chaingun muzzle sits far forward; pull shell spawn back to weapon rear.
+      const rearOffset = Math.abs(m.y) + 40;
+      const ejX = wx - forwardX * rearOffset + outX * 4 + (Math.random() * 2 - 1);
+      const ejY = wy - forwardY * rearOffset + outY * 4 + (Math.random() * 2 - 1);
+      const evx = outX * (90 + Math.random() * 65) - forwardX * (85 + Math.random() * 55);
+      const evy = outY * (90 + Math.random() * 65) - forwardY * (85 + Math.random() * 55) - (10 + Math.random() * 20);
+      Particles.spawnShellEject?.(ejX, ejY, evx, evy);
+    } else if (type === 'cannon'){
+      const rightX = Math.cos(a);
+      const rightY = Math.sin(a);
+      const outX = rightX * s;
+      const outY = rightY * s;
+      const forwardX = Math.sin(a);
+      const forwardY = -Math.cos(a);
+      const rearOffset = 16;
+      const ejX = wx - forwardX * rearOffset + outX * 7 + (Math.random() * 1.5 - 0.75);
+      const ejY = wy - forwardY * rearOffset + outY * 7 + (Math.random() * 1.5 - 0.75);
+      const evx = outX * (75 + Math.random() * 40) - forwardX * (62 + Math.random() * 36);
+      const evy = outY * (75 + Math.random() * 40) - forwardY * (62 + Math.random() * 36) - (8 + Math.random() * 16);
+      Particles.spawnShellEject?.(ejX, ejY, evx, evy, {
+        w: 8 + Math.random() * 3,
+        h: 3.8 + Math.random() * 1.5
+      });
+    }
     SFX.playShot(type);
     this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
+  }
+
+  updateChaingun(side, holding, dt){
+    const st = this.chaingun[side];
+    const isChain = this.weapons[side] === 'chaingun';
+    const def = CONFIG.WEAPONS.chaingun || {};
+    const windup = Math.max(0.05, def.windup ?? 0.32);
+    const heatPerSec = Math.max(0.05, def.heatPerSec ?? 0.64);
+    const coolPerSec = Math.max(0.05, def.coolPerSec ?? 0.45);
+
+    if (!isChain){
+      st.heat = Math.max(0, st.heat - coolPerSec * dt * 1.25);
+      st.windupT = 0;
+      st.spinning = false;
+      st.overheated = false;
+      st.windupPlayed = false;
+      return;
+    }
+
+    if (st.overheated){
+      st.spinning = false;
+      st.windupT = 0;
+      st.windupPlayed = false;
+      st.heat = Math.max(0, st.heat - coolPerSec * dt);
+      if (st.heat <= 0.02){
+        st.heat = 0;
+        st.overheated = false;
+      }
+      return;
+    }
+
+    if (!holding){
+      st.spinning = false;
+      st.windupT = 0;
+      st.windupPlayed = false;
+      st.heat = Math.max(0, st.heat - coolPerSec * dt);
+      return;
+    }
+
+    if (!st.spinning){
+      if (!st.windupPlayed){
+        SFX.playChaingunWindup?.();
+        st.windupPlayed = true;
+      }
+      st.windupT += dt;
+      if (st.windupT < windup) return;
+      st.spinning = true;
+    }
+
+    this.shoot(side, 'chaingun');
+    st.heat = Math.min(1, st.heat + heatPerSec * dt);
+    if (st.heat >= 1){
+      st.overheated = true;
+      st.spinning = false;
+      st.windupT = 0;
+      st.windupPlayed = false;
+    }
   }
 
   destroy(){

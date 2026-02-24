@@ -11,6 +11,23 @@ const shots = [];
 function rand(a, b){ return a + Math.random() * (b - a); }
 function randi(a, b){ return (rand(a, b + 1)) | 0; }
 
+function placeOverlapRect(w, h, aw, ah, overhang){
+  const hw = w * 0.5;
+  const hh = h * 0.5;
+  if (!overhang){
+    return {
+      ox: rand(-Math.max(4, hw - aw * 0.55), Math.max(4, hw - aw * 0.55)),
+      oy: rand(-Math.max(4, hh - ah * 0.55), Math.max(4, hh - ah * 0.55))
+    };
+  }
+  // Overhang but keep >= ~50% of the piece overlapping the hull.
+  const side = (Math.random() * 4) | 0; // 0 left, 1 right, 2 top, 3 bottom
+  if (side === 0) return { ox: -(hw - aw * 0.10), oy: rand(-hh * 0.62, hh * 0.62) };
+  if (side === 1) return { ox: +(hw - aw * 0.10), oy: rand(-hh * 0.62, hh * 0.62) };
+  if (side === 2) return { ox: rand(-hw * 0.62, hw * 0.62), oy: -(hh - ah * 0.10) };
+  return { ox: rand(-hw * 0.62, hw * 0.62), oy: +(hh - ah * 0.10) };
+}
+
 function buildFloatBoss(level, opts = {}){
   const def = CONFIG.BOSS?.FLOAT || {};
   const lv = Math.max(1, level | 0);
@@ -22,6 +39,8 @@ function buildFloatBoss(level, opts = {}){
   const y = opts.fromTop ? (-h - 34) : stopY;
   const mountsN = randi(def.MOUNTS_MIN ?? 3, def.MOUNTS_MAX ?? 6);
   const decoN = randi(def.DECO_MIN ?? 8, def.DECO_MAX ?? 16);
+  const forcedOverhangMounts = Math.max(1, Math.round(mountsN * 0.45));
+  const forcedOverhangDeco = Math.max(3, Math.round(decoN * 0.45));
   const hoverAmpX = rand(def.HOVER_X_MIN ?? 28, def.HOVER_X_MAX ?? 55);
   const hoverAmpY = rand(def.HOVER_Y_MIN ?? 6, def.HOVER_Y_MAX ?? 18);
   const hoverSpeed = rand(def.HOVER_SPEED_MIN ?? 0.7, def.HOVER_SPEED_MAX ?? 1.25);
@@ -38,11 +57,22 @@ function buildFloatBoss(level, opts = {}){
     const levelBoost = Math.max(0.65, 1.0 - lv * (def.COOLDOWN_LEVEL_REDUCE ?? 0.035));
     const fireMin = Math.max(0.12, baseMin * levelBoost);
     const fireMax = Math.max(fireMin + 0.04, baseMax * levelBoost);
+    const overhang = (i < forcedOverhangMounts) || Math.random() < 0.42;
+    const size = isLarge ? rand(10.5, 14.2) : rand(6.5, 8.8);
+    let ox = rand(-w * 0.40, w * 0.40);
+    let oy = rand(-h * 0.18, h * 0.30);
+    if (overhang){
+      const sign = Math.random() < 0.5 ? -1 : 1;
+      // Mount center near hull edge so it overhangs but remains attached.
+      ox = sign * ((w * 0.5) - size * 0.20);
+      oy = rand(-h * 0.34, h * 0.34);
+    }
     mounts.push({
       type: isLarge ? 'large' : 'small',
-      ox: rand(-w * 0.42, w * 0.42),
-      oy: rand(-h * 0.2, h * 0.32),
-      size: isLarge ? rand(8, 11.5) : rand(5, 7.2),
+      overhang,
+      ox,
+      oy,
+      size,
       bulletR: Math.max(2.6, (td.bulletR ?? (isLarge ? 5.2 : 3.2))),
       bulletSpeed: Math.max(90, (td.bulletSpeed ?? (isLarge ? 110 : 180)) * (1 + lv * (isLarge ? 0.012 : 0.008))),
       bulletDamage: Math.max(4, (td.bulletDamage ?? (isLarge ? 26 : 8)) * (1 + lv * (isLarge ? 0.09 : 0.06))),
@@ -56,35 +86,45 @@ function buildFloatBoss(level, opts = {}){
   const deco = [];
   for (let i = 0; i < decoN; i++){
     const kindRoll = Math.random();
+    const overhang = (i < forcedOverhangDeco) || Math.random() < 0.35;
     if (kindRoll < 0.35){
+      const dw = rand(9, 30);
+      const dh = rand(6, 20);
+      const p = placeOverlapRect(w, h, dw, dh, overhang);
       deco.push({
         kind: 'rect',
-        ox: rand(-w * 0.45, w * 0.45),
-        oy: rand(-h * 0.42, h * 0.42),
-        w: rand(6, 22),
-        h: rand(4, 16)
+        overhang,
+        ox: p.ox, oy: p.oy,
+        w: dw,
+        h: dh
       });
     } else if (kindRoll < 0.7){
       deco.push({
         kind: 'antenna',
-        ox: rand(-w * 0.4, w * 0.4),
-        oy: -h * 0.5,
-        len: rand(10, 28)
+        overhang,
+        ox: rand(-w * (overhang ? 0.50 : 0.36), w * (overhang ? 0.50 : 0.36)),
+        oy: -h * (overhang ? 0.48 : 0.42),
+        len: rand(14, 34)
       });
     } else if (kindRoll < 0.88) {
+      const pr = rand(4.5, 10.5);
+      const p = placeOverlapRect(w, h, pr * 2, pr * 2, overhang);
       deco.push({
         kind: 'pod',
-        ox: rand(-w * 0.45, w * 0.45),
-        oy: rand(-h * 0.42, h * 0.42),
-        r: rand(3, 8)
+        overhang,
+        ox: p.ox, oy: p.oy,
+        r: pr
       });
     } else {
+      const sw = rand(6, 16);
+      const sh = rand(2.2, 5.2);
+      const p = placeOverlapRect(w, h, sw, sh, overhang);
       deco.push({
         kind: 'slot',
-        ox: rand(-w * 0.45, w * 0.45),
-        oy: rand(-h * 0.42, h * 0.42),
-        w: rand(4, 12),
-        h: rand(2, 4)
+        overhang,
+        ox: p.ox, oy: p.oy,
+        w: sw,
+        h: sh
       });
     }
   }
@@ -210,8 +250,10 @@ export function update(dt){
       for (const m of (b.mounts || [])){
         if (!m.alive) continue;
         Particles.spawnImpact(b.x + m.ox, b.y + m.oy, 'explosion', 1.5);
+        Particles.spawnBotExplosion?.(b.x + m.ox, b.y + m.oy, 0.7);
       }
-      Particles.spawnImpact(b.x, b.y, 'explosion', b.maxHp / 14);
+      Particles.spawnImpact(b.x, b.y, 'explosion', b.maxHp / 10);
+      Particles.spawnBotExplosion?.(b.x, b.y, 1.8 + b.level * 0.14);
       SFX.playEnemyExplode?.();
       world.enemyDestroyed = (world.enemyDestroyed | 0) + 1;
       bosses.splice(i, 1);

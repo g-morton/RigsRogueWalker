@@ -86,6 +86,20 @@ export function spawnBotExplosion(x, y, amount = 1){
   }
 }
 
+export function spawnShellEject(x, y, vx, vy, opts = {}){
+  pool.push({
+    type: 'shell',
+    x, y,
+    vx, vy,
+    t: 0,
+    life: 0.9 + Math.random() * 0.45,
+    angle: Math.random() * Math.PI * 2,
+    spin: (Math.random() - 0.5) * 20,
+    w: opts.w ?? (4 + Math.random() * 2.2),
+    h: opts.h ?? (2 + Math.random() * 1.2)
+  });
+}
+
 export function update(dt){
   for (let i=pool.length-1;i>=0;i--){
     const p = pool[i];
@@ -95,6 +109,11 @@ export function update(dt){
       p.angle += (p.spin || 0) * dt;
       p.vx *= 0.992;
       p.vy *= 0.996;
+    } else if (p.type === 'shell'){
+      p.vy += 420 * dt;
+      p.angle += (p.spin || 0) * dt;
+      p.vx *= 0.985;
+      p.vy *= 0.992;
     } else {
       // a little drag to make it feel juicy
       p.vx *= 0.98;
@@ -112,4 +131,4 @@ export function draw(g){
   }
 }
 
-export const Particles = { reset, update, draw, spawnImpact, spawnBotExplosion };
+export const Particles = { reset, update, draw, spawnImpact, spawnBotExplosion, spawnShellEject };
