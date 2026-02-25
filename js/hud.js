@@ -3,9 +3,11 @@
 
 import { world } from './utils.js';
 
-let elDist = null;
-let elIBS = null;
-let elEnemies = null;
+const BEST_SCORE_KEY = 'rrw_best_score_v1';
+
+let elScoreNow = null;
+let elScoreBest = null;
+let elPlayerHpFill = null;
 let elRestart = null;
 let elGameOver = null;
 let elGoTitle = null;
@@ -20,15 +22,38 @@ let elBossBanner = null;
 let elPowerKey = null;
 let bossBannerTimer = null;
 
-let lastDist = -1;
-let lastIBS = -1;
-let lastEnemies = -1;
+let lastPlayerBarRatio = -1;
+let lastScoreNow = -1;
+let bestScore = 0;
+
+function computeScore(){
+  const distance = (world.dist | 0);
+  const enemies = (world.enemyDestroyed | 0);
+  const ibs = (world.ibsHit | 0);
+  return Math.max(0, Math.round(distance * 0.55 + enemies * 160 - ibs * 120));
+}
+
+function loadBestScore(){
+  try {
+    const raw = localStorage.getItem(BEST_SCORE_KEY);
+    const val = Number(raw);
+    return Number.isFinite(val) && val > 0 ? (val | 0) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBestScore(v){
+  try {
+    localStorage.setItem(BEST_SCORE_KEY, String(v | 0));
+  } catch {}
+}
 
 export const HUD = {
   init(){
-    elDist = document.getElementById('scoreDist');
-    elIBS = document.getElementById('scoreIBS');
-    elEnemies = document.getElementById('scoreEnemies');
+    elScoreNow = document.getElementById('scoreNow');
+    elScoreBest = document.getElementById('scoreBest');
+    elPlayerHpFill = document.getElementById('playerHpFill');
     elRestart = document.getElementById('restart');
     elGameOver = document.getElementById('gameOver');
     elGoTitle = document.getElementById('gameOverTitle');
@@ -41,9 +66,10 @@ export const HUD = {
     elBossBarFill = document.getElementById('bossBarFill');
     elBossBanner = document.getElementById('bossBanner');
     elPowerKey = document.getElementById('powerKey');
-    lastDist = -1;
-    lastIBS = -1;
-    lastEnemies = -1;
+    lastScoreNow = -1;
+    bestScore = loadBestScore();
+    if (elScoreBest) elScoreBest.textContent = String(bestScore);
+    lastPlayerBarRatio = -1;
     this.hideGameOver();
     this.showSplash();
     this.hideBossUI();
@@ -61,7 +87,7 @@ export const HUD = {
     if (elGoMsg) elGoMsg.textContent = payload.message || '';
     if (elGoStats){
       elGoStats.textContent =
-        `Distance: ${payload.distance | 0}  |  Enemies: ${payload.enemies | 0}  |  IBS: ${payload.ibs | 0}`;
+        `Distance: ${payload.distance | 0}  |  Enemies: ${payload.enemies | 0}  |  IBS: ${payload.ibs | 0}  |  Best: ${bestScore | 0}`;
     }
     if (elGameOver) elGameOver.style.display = 'flex';
   },
@@ -108,6 +134,8 @@ export const HUD = {
     if (elBossBanner) elBossBanner.style.display = 'none';
     if (elBossHud) elBossHud.style.display = 'none';
     if (elBossBarFill) elBossBarFill.style.width = '100%';
+    if (elPlayerHpFill) elPlayerHpFill.style.width = '100%';
+    lastPlayerBarRatio = -1;
   },
 
   setPowerKeyVisible(visible){
@@ -117,22 +145,29 @@ export const HUD = {
 
   // Call once per frame (cheap, only writes when values change)
   tick(){
-    const d = (world.dist | 0);
-    if (elDist && d !== lastDist){
-      elDist.textContent = d;
-      lastDist = d;
+    const score = computeScore();
+    if (elScoreNow && score !== lastScoreNow){
+      elScoreNow.textContent = String(score);
+      lastScoreNow = score;
+    }
+    if (score > bestScore){
+      bestScore = score;
+      saveBestScore(bestScore);
+      if (elScoreBest) elScoreBest.textContent = String(bestScore);
     }
 
-    const i = (world.ibsHit | 0);
-    if (elIBS && i !== lastIBS){
-      elIBS.textContent = i;
-      lastIBS = i;
-    }
-
-    const e = (world.enemyDestroyed | 0);
-    if (elEnemies && e !== lastEnemies){
-      elEnemies.textContent = e;
-      lastEnemies = e;
+    const p = world.player;
+    if (p && !p.dead){
+      const max = Math.max(1, p.maxHp ?? 1);
+      const cur = Math.max(0, p.hp ?? 0);
+      const ratio = Math.max(0, Math.min(1, cur / max));
+      if (elPlayerHpFill && Math.abs(ratio - lastPlayerBarRatio) > 0.001){
+        elPlayerHpFill.style.width = `${(ratio * 100).toFixed(1)}%`;
+        lastPlayerBarRatio = ratio;
+      }
+    } else {
+      if (elPlayerHpFill) elPlayerHpFill.style.width = '100%';
+      lastPlayerBarRatio = -1;
     }
   }
 };

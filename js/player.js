@@ -8,6 +8,7 @@ import { getMuzzleLocal, getCooldownSec } from './weapons.js';
 
 const MAX_TWIST = CONFIG.PLAYER.TWIST_DEG * Math.PI/180;
 const MAX_TWIST_CANVAS = (CONFIG.PLAYER.TWIST_DEG_CANVAS ?? CONFIG.PLAYER.TWIST_DEG) * Math.PI/180;
+const WEAPON_SIZE = { rifle: 1, beamer: 2, chaingun: 2, rocket: 3, cannon: 4 };
 
 export class Player{
   constructor(){
@@ -16,7 +17,7 @@ export class Player{
     this.t = 0;
     this.angle = 0;
 
-    this.weapons = { left: 'chaingun', right: 'cannon' };
+    this.weapons = { left: 'rifle', right: null };
     this.cooldown = { left: 0, right: 0 };
     this.chaingun = {
       left:  { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false },
@@ -30,6 +31,9 @@ export class Player{
 
     this.maxHp = CONFIG.PLAYER.HP ?? 120;
     this.hp = this.maxHp;
+    this.lastHp = this.hp;
+    this.damageBucket = 0;
+    this.rigMarks = [];
     this.fxSparkT = 0;
     this.fxSmokeT = 0;
     this.dead = false;
@@ -76,6 +80,23 @@ export class Player{
     this.cooldown.left = Math.max(0, this.cooldown.left - dt);
     this.cooldown.right = Math.max(0, this.cooldown.right - dt);
 
+    // Damage-bucket weapon loss: every 20% max HP damage can pop one larger weapon.
+    const hpNow = Math.max(0, this.hp ?? this.maxHp);
+    if (hpNow < this.lastHp){
+      this.damageBucket += (this.lastHp - hpNow);
+    }
+    this.lastHp = hpNow;
+    const threshold = this.maxHp * 0.20;
+    if (this.damageBucket >= threshold){
+      const broke = this.breakLargestWeapon();
+      if (broke){
+        this.damageBucket -= threshold;
+      } else {
+        // Keep below threshold when no valid break is possible (e.g. only one weapon equipped).
+        this.damageBucket = Math.min(this.damageBucket, threshold * 0.95);
+      }
+    }
+
     // Damage-state feedback (sparks/smoke as HP drops)
     const hpRatio = this.hp / Math.max(1, this.maxHp);
     this.fxSparkT = Math.max(0, this.fxSparkT - dt);
@@ -109,6 +130,58 @@ export class Player{
   setWeapon(side, type){
     if (side !== 'left' && side !== 'right') return;
     this.weapons[side] = type || null;
+    if (type !== 'chaingun'){
+      const st = this.chaingun[side];
+      st.heat = 0; st.windupT = 0; st.spinning = false; st.overheated = false; st.windupPlayed = false;
+    }
+  }
+
+  grantWeaponFromPickup(side, type){
+    this.setWeapon(side, type);
+    const maxHp = Math.max(1, this.maxHp ?? 1);
+    this.hp = Math.min(maxHp, (this.hp ?? maxHp) + maxHp * 0.25);
+    const threshold = maxHp * 0.20;
+    this.damageBucket = Math.max(0, (this.damageBucket ?? 0) - threshold);
+    this.lastHp = Math.max(0, this.hp ?? maxHp);
+  }
+
+  addMediumRigMark(){
+    const marks = this.rigMarks || (this.rigMarks = []);
+    const cardinal = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];
+    const mk = {
+      group: 'mark',
+      kind: (Math.random() < 0.5) ? 'line' : (Math.random() < 0.5 ? 'dot' : 'plate'),
+      ox: (Math.random() * 26) - 13,
+      oy: (Math.random() * 18) - 9,
+      rot: cardinal[(Math.random() * cardinal.length) | 0],
+      size: 1 + Math.random() * 1.25,
+      alt: Math.random() < 0.35
+    };
+    marks.push(mk);
+
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const protrusionKinds = ['antenna', 'exhaust', 'tank', 'ammo'];
+    const pk = protrusionKinds[(Math.random() * protrusionKinds.length) | 0];
+    const isAntenna = pk === 'antenna';
+    const ox = side * (isAntenna ? (3 + Math.random() * 8) : (2 + Math.random() * 6));
+    const oy = isAntenna
+      ? (-6 + Math.random() * 12)  // can sit/extend forward
+      : (6 + Math.random() * 10);  // rear-only for shape modules
+    const rot = isAntenna
+      ? (-Math.PI * 0.5)           // poke toward front
+      : (Math.PI * 0.5);           // point backward
+    marks.push({
+      group: 'protrusion',
+      kind: pk,
+      side,
+      ox,
+      oy,
+      rot,
+      size: 0.9 + Math.random() * 1.4
+    });
+
+    const maxMarks = 36;
+    if (marks.length > maxMarks) marks.splice(0, marks.length - maxMarks);
   }
 
   fire(side){
@@ -118,6 +191,23 @@ export class Player{
     if (type === 'chaingun') return;
     if (this.cooldown[side] > 0) return;
     this.shoot(side, type);
+  }
+
+  getBeamerPose(side){
+    const m = getMuzzleLocal('beamer');
+    const s = (side === 'left') ? -1 : 1;
+    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
+    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const lx = ax + s * m.x;
+    const ly = ay + m.y;
+    const a = this.angle;
+    const rx = lx * Math.cos(a) - ly * Math.sin(a);
+    const ry = lx * Math.sin(a) + ly * Math.cos(a);
+    const wx = this.x + rx;
+    const wy = this.y + ry;
+    const forwardX = Math.sin(a);
+    const forwardY = -Math.cos(a);
+    return { x: wx + forwardX * 20, y: wy + forwardY * 20, angle: a };
   }
 
   shoot(side, type){
@@ -137,6 +227,17 @@ export class Player{
     const ry =  lx * Math.sin(a) + ly * Math.cos(a);
     const wx = this.x + rx;
     const wy = this.y + ry;
+
+    if (type === 'beamer'){
+      const pose = this.getBeamerPose(side);
+      Projectiles.fireBeam?.(pose.x, pose.y, pose.angle, {
+        damageMul: this.damageMul,
+        track: () => this.getBeamerPose(side)
+      });
+      SFX.playShot(type);
+      this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
+      return;
+    }
 
     Projectiles.spawn(wx, wy, a, type, {
       speedMul: this.projSpeedMul,
@@ -232,6 +333,40 @@ export class Player{
       st.windupT = 0;
       st.windupPlayed = false;
     }
+  }
+
+  getMountWorld(side){
+    const s = (side === 'left') ? -1 : 1;
+    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
+    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const a = this.angle;
+    const rx = ax * Math.cos(a) - ay * Math.sin(a);
+    const ry = ax * Math.sin(a) + ay * Math.cos(a);
+    return { x: this.x + rx, y: this.y + ry };
+  }
+
+  breakLargestWeapon(){
+    const entries = [];
+    for (const side of ['left', 'right']){
+      const w = this.weapons[side];
+      if (!w) continue;
+      entries.push({ side, type: w, size: WEAPON_SIZE[w] ?? 1 });
+    }
+    if (entries.length <= 1) return false; // always keep at least one weapon
+
+    entries.sort((a, b) => b.size - a.size);
+    const drop = entries[0];
+
+    const p = this.getMountWorld(drop.side);
+    Particles.spawnBotExplosion?.(p.x, p.y, 0.7);
+    Particles.spawnImpact?.(p.x, p.y, 'explosion', 0.8);
+    SFX.playEnemyExplode?.();
+
+    this.weapons[drop.side] = null;
+    this.cooldown[drop.side] = 0;
+    const st = this.chaingun[drop.side];
+    st.heat = 0; st.windupT = 0; st.spinning = false; st.overheated = false; st.windupPlayed = false;
+    return true;
   }
 
   destroy(){

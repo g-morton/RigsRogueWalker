@@ -5,11 +5,12 @@ const BG = CONFIG.COLORS.BG;
 const RED = CONFIG.COLORS.ACCENT;
 const BLUE = CONFIG.COLORS.ENEMY;
 const SMOKE = CONFIG.COLORS.SMOKE;
+const TILE = '#e6e6e6';
 
 export const Theme = {
-  // Tiles: draw white corridors (safe paths)
+  // Tiles: draw light-gray corridors (safe paths)
   drawTiles(g, rows){
-    g.fillStyle = BG;
+    g.fillStyle = TILE;
     for(const r of rows){
       for(const c of r.corridors){
         g.fillRect(c.x, r.y - r.h/2, c.w, r.h);
@@ -51,6 +52,8 @@ export const Theme = {
     const headY = -P.TORSO_H/2 + P.HEAD_OFFSET_Y;
     g.fillStyle = INK;
     g.fillRect(headX, headY, P.HEAD, P.HEAD);
+
+    drawRigMarks(g, p);
 
     // weapon mounts
     if (p.weapons.left){
@@ -125,6 +128,165 @@ export const Theme = {
     g.restore();
   },
 
+  drawBeam(g, b){
+    const t = b.t / Math.max(0.001, b.life);
+    const nearFrac = Math.max(0.05, Math.min(0.85, b.nearFrac ?? 0.25));
+    const fade = Math.max(0, 1 - t);
+    const alpha = fade * (0.72 + Math.random() * 0.45);
+    const dx = b.x2 - b.x1;
+    const dy = b.y2 - b.y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const hx = b.x1 + dx * nearFrac;
+    const hy = b.y1 + dy * nearFrac;
+    const tailStart = Math.max(0.06, nearFrac);
+    const tx = b.x1 + dx * tailStart;
+    const ty = b.y1 + dy * tailStart;
+    const arcEndK = Math.min(1, nearFrac + 0.05);
+    const ax2 = b.x1 + dx * arcEndK;
+    const ay2 = b.y1 + dy * arcEndK;
+
+    g.save();
+    g.globalAlpha = alpha;
+    g.lineCap = 'round';
+
+    // Core beam, split into strong near segment and faded tail segment.
+    g.strokeStyle = 'rgba(42,102,255,0.40)';
+    g.lineWidth = 15.5;
+    g.beginPath();
+    g.moveTo(b.x1, b.y1);
+    g.lineTo(tx, ty);
+    g.stroke();
+    g.strokeStyle = 'rgba(42,102,255,0.04)';
+    g.lineWidth = 6.6;
+    g.beginPath();
+    g.moveTo(tx, ty);
+    g.lineTo(b.x2, b.y2);
+    g.stroke();
+
+    g.strokeStyle = 'rgba(255,255,255,0.44)';
+    g.lineWidth = 10.5;
+    g.beginPath();
+    g.moveTo(b.x1, b.y1);
+    g.lineTo(tx, ty);
+    g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.05)';
+    g.lineWidth = 3.4;
+    g.beginPath();
+    g.moveTo(tx, ty);
+    g.lineTo(b.x2, b.y2);
+    g.stroke();
+
+    g.strokeStyle = 'rgba(255,255,255,0.98)';
+    g.lineWidth = 5.4;
+    g.beginPath();
+    g.moveTo(b.x1, b.y1);
+    g.lineTo(tx, ty);
+    g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.08)';
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(tx, ty);
+    g.lineTo(b.x2, b.y2);
+    g.stroke();
+
+    // The first section is intentionally heavier to telegraph max damage.
+    g.strokeStyle = 'rgba(255,255,255,0.78)';
+    g.lineWidth = 8.2;
+    g.beginPath();
+    g.moveTo(b.x1, b.y1);
+    g.lineTo(hx, hy);
+    g.stroke();
+
+    g.strokeStyle = 'rgba(42,102,255,0.62)';
+    g.lineWidth = 11.8;
+    g.beginPath();
+    g.moveTo(b.x1, b.y1);
+    g.lineTo(hx, hy);
+    g.stroke();
+
+    // Side crackles near muzzle (wide here, then quickly taper).
+    const muzzleArcs = 7 + ((Math.random() * 4) | 0);
+    for (let j = 0; j < muzzleArcs; j++){
+      const k0 = Math.random() * Math.max(0.02, arcEndK - 0.02);
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const startEdgeJitter = (Math.random() * 2 - 1) * 4.5;
+      const sx = b.x1 + dx * k0 + nx * side * startEdgeJitter;
+      const sy = b.y1 + dy * k0 + ny * side * startEdgeJitter;
+      const lenSide = 20 + Math.random() * 24;
+      const lenForward = 2 + Math.random() * 8;
+      const mx = sx + nx * side * lenSide * 0.42 + dx * lenForward * 0.25;
+      const my = sy + ny * side * lenSide * 0.42 + dy * lenForward * 0.25;
+      const ex = sx + nx * side * lenSide + dx * lenForward;
+      const ey = sy + ny * side * lenSide + dy * lenForward;
+      g.beginPath();
+      g.moveTo(sx, sy);
+      g.lineTo(mx, my);
+      g.lineTo(ex, ey);
+      g.strokeStyle = 'rgba(42,102,255,0.98)';
+      g.lineWidth = 3.0 + Math.random() * 1.2;
+      g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.96)';
+      g.lineWidth = 1.2 + Math.random() * 0.8;
+      g.stroke();
+    }
+
+    // Main lightning filaments: widest at muzzle, but constrained to the effective range window.
+    const arcs = Math.max(1, b.arcs ?? 3);
+    const wildness = Math.max(6, b.jitter ?? 8) * (1.1 + Math.random() * 0.9);
+    for (let j = 0; j < arcs; j++){
+      const points = 10 + ((Math.random() * 8) | 0);
+      const phase = b.t * 30 + j * 1.7;
+      const arcStartK = Math.random() * Math.max(0.04, arcEndK * 0.45);
+      const arcStartEdge = (Math.random() * 2 - 1) * 3.6;
+      g.beginPath();
+      for (let i = 0; i <= points; i++){
+        const k = arcStartK + (arcEndK - arcStartK) * (i / points);
+        const tailT = k <= nearFrac ? 0 : (k - nearFrac) / Math.max(1e-6, 1 - nearFrac);
+        const px = b.x1 + dx * k;
+        const py = b.y1 + dy * k;
+        const pulse = 0.6 + Math.abs(Math.sin(phase + k * 14.5));
+        const startWide = Math.pow(1 - k, 0.72);      // high near muzzle
+        const nearWindow = Math.max(0, 1 - (k / Math.max(0.08, nearFrac))); // extra wide in optimal range
+        const tailFade = 1 - tailT * 0.78;
+        const fan = (0.18 + 1.05 * startWide + 0.85 * nearWindow) * Math.max(0.14, tailFade);
+        const jmag = ((Math.random() - 0.5) * wildness * pulse * fan) + (arcStartEdge * (1 - i / points));
+        const x = px + nx * jmag;
+        const y = py + ny * jmag;
+        if (i === 0) g.moveTo(x, y);
+        else g.lineTo(x, y);
+
+        if (i > 0 && i < points && Math.random() < (0.22 * (1 - k) + 0.03) * (1 - tailT * 0.8)){
+          const branchLen = 6 + Math.random() * 18;
+          const branchSign = Math.random() < 0.5 ? -1 : 1;
+          const bx = x + nx * branchSign * branchLen + dx * (Math.random() - 0.5) * 0.04;
+          const by = y + ny * branchSign * branchLen + dy * (Math.random() - 0.5) * 0.04;
+          g.moveTo(x, y);
+          g.lineTo(bx, by);
+          g.moveTo(x, y);
+        }
+      }
+      // Blue outer filament with white hot center for contrast.
+      g.strokeStyle = 'rgba(42,102,255,0.74)';
+      g.lineWidth = 1.9 + Math.random() * 1.5;
+      g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.88)';
+      g.lineWidth = 1.0 + Math.random() * 1.0;
+      g.stroke();
+    }
+
+    // Hard visual cue for power drop: faint tail after arc/falloff zone.
+    g.strokeStyle = 'rgba(255,255,255,0.10)';
+    g.lineWidth = 2.0;
+    g.beginPath();
+    g.moveTo(ax2, ay2);
+    g.lineTo(b.x2, b.y2);
+    g.stroke();
+
+    g.restore();
+  },
+
   drawFloatBoss(g, b){
     g.save();
     g.translate(b.x, b.y);
@@ -134,10 +296,12 @@ export const Theme = {
     g.translate((b.shadowOffsetX || 0) * 1.15, (b.h || 60) * 0.80);
     const sw = (b.w || 120) * 1.08;
     const sh = (b.h || 70) * 1.08;
-    g.scale(1.0, 0.24);
+    g.scale(1.0, 1.0);
+    g.filter = 'blur(8px)';
     g.fillStyle = 'rgba(90,90,90,0.45)';
     g.fillRect(-sw * 0.5, -sh * 0.5, sw, sh);
     g.restore();
+    g.filter = 'none';
 
     // Main hull.
     const hw = (b.w || 120) * 0.5;
@@ -584,6 +748,87 @@ drawIBSBubble(g, p, r){
 
 };
 
+function drawRigMarks(g, p){
+  const marks = p.rigMarks;
+  if (!Array.isArray(marks) || !marks.length) return;
+  for (const m of marks){
+    if (m.group === 'protrusion'){
+      drawRigProtrusion(g, m);
+      continue;
+    }
+    const ox = m.ox ?? 0;
+    const oy = m.oy ?? 0;
+    const size = m.size ?? 1;
+    const rot = m.rot ?? 0;
+    const tone = m.alt ? BLUE : BG;
+    g.save();
+    g.translate(ox, oy);
+    g.rotate(rot);
+    if (m.kind === 'line'){
+      g.strokeStyle = tone;
+      g.lineWidth = 1.2 + size * 0.7;
+      g.beginPath();
+      g.moveTo(-2.8 * size, 0);
+      g.lineTo(2.8 * size, 0);
+      g.stroke();
+    } else if (m.kind === 'dot'){
+      g.beginPath();
+      g.arc(0, 0, 1.1 + size * 0.9, 0, Math.PI * 2);
+      g.fillStyle = tone;
+      g.fill();
+    } else {
+      const w = 2.4 + size * 2.6;
+      const h = 1.6 + size * 1.8;
+      g.fillStyle = tone;
+      g.fillRect(-w / 2, -h / 2, w, h);
+    }
+    g.restore();
+  }
+}
+
+function drawRigProtrusion(g, m){
+  const ox = m.ox ?? 0;
+  const oy = m.oy ?? 0;
+  const size = m.size ?? 1;
+  const rot = m.rot ?? 0;
+  g.save();
+  g.translate(ox, oy);
+  g.rotate(rot);
+  g.fillStyle = INK;
+  g.strokeStyle = BG;
+  if (m.kind === 'antenna'){
+    g.lineWidth = 1.1;
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.lineTo(5.5 * size, 0);
+    g.stroke();
+    g.beginPath();
+    g.arc(6.7 * size, 0, 1.1 + size * 0.35, 0, Math.PI * 2);
+    g.fill();
+    g.lineWidth = 0.9;
+    g.stroke();
+  } else if (m.kind === 'exhaust'){
+    g.fillRect(0, -1.8 * size, 4.2 * size, 3.6 * size);
+    g.lineWidth = 1.0;
+    g.strokeRect(0, -1.8 * size, 4.2 * size, 3.6 * size);
+    g.fillStyle = BG;
+    g.fillRect(4.2 * size, -0.6 * size, 1.4 * size, 1.2 * size);
+  } else if (m.kind === 'tank'){
+    g.beginPath();
+    g.arc(3.2 * size, 0, 2.1 * size, 0, Math.PI * 2);
+    g.fill();
+    g.lineWidth = 1.0;
+    g.stroke();
+  } else {
+    g.fillRect(0, -2.2 * size, 5.0 * size, 4.4 * size);
+    g.lineWidth = 1.0;
+    g.strokeRect(0, -2.2 * size, 5.0 * size, 4.4 * size);
+    g.fillStyle = BG;
+    g.fillRect(1.0 * size, -0.3 * size, 3.0 * size, 0.6 * size);
+  }
+  g.restore();
+}
+
 // weapon visuals
 function drawWeapon(g, ax, ay, side, type, heat = 0){
   const s = side === 'left' ? -1 : 1;
@@ -595,6 +840,15 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
     case 'rifle':
       g.fillRect(-4, -14, 6, 30);
       g.fillRect(0, 4, 10, 10);
+      break;
+    case 'beamer':
+      // Shorter, wider body with rounded emitter.
+      g.fillRect(-2, -11, 14, 21);   // main body
+      g.fillRect(5, -4, 10, 10);     // rear/lower mass
+      g.fillRect(2, 8, 6, 6);      // grip
+      g.beginPath();
+      g.arc(5, -13, 5.2, Math.PI, Math.PI * 2);
+      g.fill();
       break;
     case 'chaingun':
       g.fillRect(-2, -39, 12, 46);  // tall column

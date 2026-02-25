@@ -125,8 +125,9 @@ function startRAF(){
     if (!player.dead && player.hp <= 0){
       player.destroy();
     }
+    Projectiles.update(dt);
     player.draw(ctx);
-    Projectiles.update(dt); Projectiles.draw(ctx);
+    Projectiles.draw(ctx);
     Particles.update(dt); Particles.draw(ctx);
     IBS.drawBubbles?.(ctx);
 
@@ -217,8 +218,7 @@ export function gameOver(msg){
 export function wireUI(){
   HUD.init();
   SFX.warmup?.();
-  // Prevent browser context menu from interrupting right-click fire.
-  window.addEventListener('contextmenu', (e)=>{ e.preventDefault(); });
+  window.addEventListener('contextmenu', (e)=> e.preventDefault());
   const btn = document.getElementById('restart');
   if (btn){
     btn.addEventListener('click', (e)=>{ e.preventDefault(); startGame(); });
@@ -233,7 +233,6 @@ export function wireUI(){
   }
   const cvs = document.getElementById('game');
   if (cvs){
-    cvs.addEventListener('contextmenu', e=>e.preventDefault());
     cvs.addEventListener('mousedown', (e)=>{
       if (!world.player) return;
       if (e.button === 0) world.player.fire('left');

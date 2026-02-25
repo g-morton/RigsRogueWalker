@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 
 const SHOT_FILES = {
   small: './assets/sounds/shoot-small.wav',
+  beam: './assets/sounds/shoot-beam.wav',
   chaingun: './assets/sounds/shoot-chaingun.wav',
   big: './assets/sounds/shoot-big.wav',
   rocket: './assets/sounds/shoot-rocket.wav'
@@ -26,6 +27,7 @@ const IBS_SPLAT_FILES = Array.from({ length: IBS_SPLAT_COUNT }, (_, i) => `./ass
 
 const SHOT_BY_WEAPON = {
   rifle: 'small',
+  beamer: 'beam',
   chaingun: 'chaingun',
   cannon: 'big',
   rocket: 'rocket'

@@ -36,8 +36,8 @@ export const CONFIG = {
     HEAD_OFFSET_Y: -18,
     BASE_STEP: 1.0, LEG_SPEED: 0.7, HEAD_BOB_SPEED: 0.5,
     MOUNT_OFFSET_X: 30, MOUNT_OFFSET_Y: 4,
-    MOVE_PX_PER_SEC: 120,
-    TWIST_DEG: 60,
+    MOVE_PX_PER_SEC: 100,
+    TWIST_DEG: 50,
     TWIST_DEG_CANVAS: 115,
     TWIST_LERP: 0.15,
     TWIST_LERP_CANVAS: 0.36,
@@ -45,6 +45,7 @@ export const CONFIG = {
   },
   WEAPONS: {
     rifle:   { cooldown: 0.18, muzzle:{x:6, y:-12} },
+    beamer:  { cooldown: 1.35, muzzle:{x:6, y:-12} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},
       windup: 0.85,
@@ -55,11 +56,17 @@ export const CONFIG = {
     rocket:  { cooldown: 0.90, muzzle:{x:0, y:-18} }
   },
   PROJECTILES: {
-    rifle:    { speed: 420, life: 3, r: 3, damage: 10 },
-    chaingun: { speed: 520, life: 2, len: 18, w: 3, damage: 6 },
-    cannon:   { speed: 360, life: 2.0, r: 5, damage: 40 },
+    rifle:    { speed: 450, life: 3, r: 3, damage: 10 },
+    beamer:   {
+      range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 9,
+      coreRadius: 7, lightningRadius: 34,
+      nearFrac: 0.25, farDamageMul: 0.15,
+      closeBoostFrac: 0.16, closeBoostMul: 2.8
+    },
+    chaingun: { speed: 550, life: 2, len: 18, w: 3, damage: 6 },
+    cannon:   { speed: 400, life: 2.0, r: 5, damage: 50 },
     rocket: {
-      speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6, damage: 55,
+      speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6, damage: 60,
       ramp_sec: 0.6, accel_base: 0.2, accel_peak: 3.0,
       trail_dt: 0.03, trail_len: 12, puff_r0: 2.0, puff_growth: 22, puff_fade: 1.6
     }
@@ -124,11 +131,72 @@ export const CONFIG = {
   },
   BOSS: {
     INTERVAL_DIST: 2000,
-    TURRET_TYPE: 'large',
-    HP_MULT: 4.0,
-    SIZE_MULT: 1.5,
     ARENA_ROWS: 7,
-    TYPE_POOL: ['float'],
+    // Boss encounter configuration:
+    // - `ENCOUNTER_DEFAULT` is used when no rule in ENCOUNTERS matches the level.
+    // - Rules are matched top-to-bottom against `minLevel`/`maxLevel` (inclusive).
+    // - Currently implemented encounter type: `float`.
+    ENCOUNTER_DEFAULT: {
+      type: 'float',
+      hpMul: 1.0,
+      sizeMul: 1.0,
+      damageMul: 1.0,
+      projectileSpeedMul: 1.0,
+      fireRateMul: 1.0,
+      mountMul: 1.0,
+      largeMountBonus: 0.0,
+      hoverSpeedMul: 1.0
+    },
+    // Encounter cookbook (copy/paste into ENCOUNTERS):
+    // 1) Single heavy turret:
+    // { minLevel: 1, maxLevel: 1, type: 'turret', turretType: 'large', hpMul: 1.25, sizeMul: 1.45 }
+    //
+    // 2) Heavy + 2 fast light flankers:
+    // {
+    //   minLevel: 2, maxLevel: 2, type: 'pack',
+    //   members: [
+    //     { turretType: 'large', xFrac: 0.50, hpMul: 1.2, sizeMul: 1.4 },
+    //     { turretType: 'small', xFrac: 0.30, fireRateMul: 1.5, damageMul: 0.72 },
+    //     { turretType: 'small', xFrac: 0.70, fireRateMul: 1.5, damageMul: 0.72 }
+    //   ]
+    // }
+    //
+    // 3) Durable float with extra guns:
+    // { minLevel: 3, maxLevel: 5, type: 'float', hpMul: 1.15, mountMul: 1.2, fireRateMul: 1.08, damageMul: 1.05 }
+    //
+    // 4) Late aggressive float:
+    // { minLevel: 6, type: 'float', hpMul: 1.35, fireRateMul: 1.2, damageMul: 1.2, projectileSpeedMul: 1.12, mountMul: 1.25, largeMountBonus: 0.16, hoverSpeedMul: 1.1 }
+    //
+    // Notes:
+    // - `xFrac` is horizontal position: 0.0 left, 0.5 center, 1.0 right.
+    // - `fireRateMul` > 1 fires faster (lower cooldown).
+    // - Most multipliers support either encounter-level or per-pack-member overrides.
+    ENCOUNTERS: [
+      // Examples:
+      // `type:'turret'` uses one turret boss (supports `turretType`).
+      // `type:'pack'` uses `members` with per-member overrides.
+      { minLevel: 1, maxLevel: 1, type: 'turret', turretType: 'large', hpMul: 1.2, sizeMul: 1.4, damageMul: 1.0, fireRateMul: 1.0 },
+      {
+        minLevel: 2, maxLevel: 2, type: 'pack',
+        members: [
+          { turretType: 'large', xFrac: 0.50, hpMul: 1.25, sizeMul: 1.45 },
+          { turretType: 'small', xFrac: 0.30, hpMul: 1.0, fireRateMul: 1.45, damageMul: 0.75 },
+          { turretType: 'small', xFrac: 0.70, hpMul: 1.0, fireRateMul: 1.45, damageMul: 0.75 }
+        ]
+      },
+      { minLevel: 3, maxLevel: 5, type: 'float', hpMul: 1.0, fireRateMul: 1.0, damageMul: 1.0, mountMul: 1.0 },
+      { minLevel: 6, type: 'float', hpMul: 1.18, fireRateMul: 1.12, damageMul: 1.12, mountMul: 1.15, largeMountBonus: 0.12, hoverSpeedMul: 1.08 }
+    ],
+    TURRET: {
+      STOP_Y_FRAC: 0.24,
+      HP_MULT: 4.0,
+      SIZE_MULT: 1.5
+    },
+    PACK_DEFAULT_MEMBERS: [
+      { turretType: 'large', xFrac: 0.50 },
+      { turretType: 'small', xFrac: 0.32, fireRateMul: 1.35, damageMul: 0.78 },
+      { turretType: 'small', xFrac: 0.68, fireRateMul: 1.35, damageMul: 0.78 }
+    ],
     FLOAT: {
       HP_BASE: 220,
       HP_PER_LEVEL: 85,
@@ -152,13 +220,9 @@ export const CONFIG = {
     }
   },
   POWERUPS: {
-    RADIUS: 16,
-    EVERY_ROWS: 5,
-    REPAIR_HEAL_FRAC: 0.35,
-    REPAIR_BASE_CHANCE: 0.08,
-    REPAIR_MAX_BONUS_CHANCE: 0.55,
-    REPAIR_GUARANTEE_MIN: 4,
-    REPAIR_GUARANTEE_MAX: 5
+    RADIUS: 20,
+    MINOR_REPAIR_HEAL_FRAC: 0.15,
+    MINOR_WALKER_FACTOR: 1.08
   },
   SFX: {
     IBS_SPLAT_COUNT: 9,

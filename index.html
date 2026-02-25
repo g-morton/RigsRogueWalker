@@ -25,13 +25,13 @@
     }
 
     #topUi {
-      height: 38px;
-      flex: 0 0 38px;
+      height: 52px;
+      flex: 0 0 52px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 5px 8px;
+      padding: 5px 8px 6px;
       box-sizing: border-box;
       background: #111;
       color: #fff;
@@ -42,10 +42,65 @@
       position: static;
       background: transparent;
       color: #fff;
-      padding: 0;
+      padding: 0 2px 0 0;
       border-radius: 0;
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    #playerHudCompact {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 100%;
+    }
+
+    #playerStats {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1;
+    }
+
+    .hudLabel {
+      opacity: 0.78;
+      margin-right: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .hudValue {
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-size: 13px;
+    }
+
+    .hudValue.fixed {
+      display: inline-block;
+      width: 78px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #playerHpWrap {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid #000;
+      box-sizing: border-box;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+
+    #playerHpFill {
+      width: 100%;
+      height: 100%;
+      background: #2a66ff;
+      transition: width 80ms linear;
     }
 
     #controls {
@@ -204,11 +259,13 @@
   <div id="gameFrame">
     <div id="topUi">
       <div id="hud">
-          Dist: <span id="scoreDist">0</span>
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          Enemies: <span id="scoreEnemies">0</span>
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          IBS: <span id="scoreIBS">0</span>
+        <div id="playerHudCompact">
+          <div id="playerStats">
+            <span><span class="hudLabel">Score</span><span class="hudValue fixed" id="scoreNow">0</span></span>
+            <span><span class="hudLabel">Best</span><span class="hudValue fixed" id="scoreBest">0</span></span>
+          </div>
+          <div id="playerHpWrap"><div id="playerHpFill"></div></div>
+        </div>
       </div>
       <div id="controls">
         <a href="#" id="restart">Start ></a>
@@ -217,7 +274,7 @@
 
     <div id="playArea">
       <div id="bossHud">
-        <div id="bossLabel">Boss Integrity</div>
+        <!--<div id="bossLabel">Boss Integrity</div>-->
         <div id="bossBarWrap"><div id="bossBarFill"></div></div>
       </div>
       <canvas id="game" width="768" height="1024"></canvas>
@@ -232,7 +289,7 @@
         <strong>Rules:</strong> See how far you can get, destroy enemies, while avoiding hurting any innocent bystanders.<br>
         <strong>Controls:</strong> Use cursor keys to move, and mouse to target and shoot.<br>
         <strong>Power-ups:</strong> Keep an eye out for upgrades.<br>
-        <strong>Key:</strong> D Damage up, F Projectile speed up, R Fire rate up, M Move speed up, HP Repair, L-* Left weapon swap, R-* Right weapon swap.
+        <strong>Key:</strong> D Damage up, F Projectile speed up, R Fire rate up, M Move speed up, HP Repair, L-* Left weapon swap, R-* Right weapon swap (includes Beamer).
       </div>
       <a href="#" id="splashPlay">Play</a>
     </div>

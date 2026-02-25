@@ -3,6 +3,80 @@ import { world } from './utils.js';
 import { Theme } from './theme.js';
 
 const shots = [];
+const beams = [];
+const beamResolvers = [];
+
+function closestPointOnSegment(px, py, x1, y1, x2, y2){
+  const vx = x2 - x1;
+  const vy = y2 - y1;
+  const c2 = vx*vx + vy*vy;
+  if (c2 <= 1e-6){
+    const dx = px - x1;
+    const dy = py - y1;
+    return { distSq: dx*dx + dy*dy, u: 0 };
+  }
+  const wx = px - x1;
+  const wy = py - y1;
+  let u = (wx*vx + wy*vy) / c2;
+  if (u < 0) u = 0;
+  if (u > 1) u = 1;
+  const cx = x1 + vx * u;
+  const cy = y1 + vy * u;
+  const dx = px - cx;
+  const dy = py - cy;
+  return { distSq: dx*dx + dy*dy, u };
+}
+
+function updateTrackedBeam(b){
+  if (typeof b.track !== 'function') return;
+  const next = b.track();
+  if (!next) return;
+  const x = next.x ?? b.x1;
+  const y = next.y ?? b.y1;
+  const angle = next.angle ?? Math.atan2(b.x2 - b.x1, -(b.y2 - b.y1));
+  const dx = Math.sin(angle);
+  const dy = -Math.cos(angle);
+  b.x1 = x;
+  b.y1 = y;
+  b.x2 = x + dx * b.range;
+  b.y2 = y + dy * b.range;
+}
+
+function makeBeamPayload(b, dt){
+  const tickScale = dt / Math.max(0.001, b.life);
+  const nearFrac = Math.max(0.05, Math.min(0.85, b.nearFrac ?? 0.25));
+  const farDamageMul = Math.max(0, Math.min(1, b.farDamageMul ?? 0.15));
+  const closeBoostFrac = Math.max(0.02, Math.min(nearFrac, b.closeBoostFrac ?? 0.16));
+  const closeBoostMul = Math.max(1, b.closeBoostMul ?? 2.8);
+  const coreRadius = Math.max(0, b.coreRadius ?? 6);
+  const lightningRadius = Math.max(1, b.lightningRadius ?? 30);
+
+  return {
+    x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
+    damage: b.damage,
+    type: 'beamer',
+    damageAt(px, py, targetRadius = 0){
+      const hit = closestPointOnSegment(px, py, b.x1, b.y1, b.x2, b.y2);
+      const radial = Math.max(0, Math.sqrt(hit.distSq) - Math.max(0, targetRadius));
+      const fan = lightningRadius * (0.16 + 0.84 * hit.u);
+      const edge = coreRadius + fan;
+      if (radial > edge) return 0;
+
+      const falloffT = hit.u <= nearFrac ? 0 : (hit.u - nearFrac) / Math.max(1e-6, 1 - nearFrac);
+      const distMul = 1 - (1 - farDamageMul) * Math.min(1, Math.max(0, falloffT));
+      const closeT = Math.min(1, hit.u / closeBoostFrac);
+      const closeMul = closeBoostMul - (closeBoostMul - 1) * closeT;
+
+      let radialMul = 1;
+      if (radial > coreRadius){
+        const rr = (radial - coreRadius) / Math.max(1e-6, edge - coreRadius);
+        radialMul = (1 - Math.min(1, Math.max(0, rr))) * (0.3 + Math.random() * 0.7);
+      }
+
+      return Math.max(0, b.damage * tickScale * distMul * closeMul * radialMul);
+    }
+  };
+}
 
 export function spawn(x, y, angle, type='rifle', mods={}){
   const def = CONFIG.PROJECTILES[type] || CONFIG.PROJECTILES.rifle;
@@ -26,7 +100,44 @@ export function spawn(x, y, angle, type='rifle', mods={}){
   shots.push(p);
 }
 
-export function reset(){ shots.length = 0; }
+export function registerBeamResolver(fn){
+  if (typeof fn !== 'function') return;
+  beamResolvers.push(fn);
+}
+
+export function fireBeam(x, y, angle, mods = {}){
+  const def = CONFIG.PROJECTILES.beamer || {};
+  const range = def.range ?? 980;
+  const dx = Math.sin(angle);
+  const dy = -Math.cos(angle);
+  const x2 = x + dx * range;
+  const y2 = y + dy * range;
+  const damageMul = mods.damageMul ?? 1.0;
+  const damage = Math.max(1, (def.damage ?? 20) * damageMul);
+
+  const beam = {
+    x1: x, y1: y, x2, y2,
+    t: 0,
+    life: def.life ?? 0.09,
+    range,
+    damage,
+    jitter: def.jitter ?? 8,
+    arcs: def.arcs ?? 3,
+    coreRadius: def.coreRadius ?? 6,
+    lightningRadius: def.lightningRadius ?? 30,
+    nearFrac: def.nearFrac ?? 0.25,
+    farDamageMul: def.farDamageMul ?? 0.15,
+    closeBoostFrac: def.closeBoostFrac ?? 0.16,
+    closeBoostMul: def.closeBoostMul ?? 2.8,
+    track: mods.track
+  };
+  beams.push(beam);
+}
+
+export function reset(){
+  shots.length = 0;
+  beams.length = 0;
+}
 
 export function update(dt){
   for(const s of shots){
@@ -66,6 +177,22 @@ export function update(dt){
       shots.splice(i,1);
     }
   }
+
+  for (let i = beams.length - 1; i >= 0; i--){
+    const b = beams[i];
+    updateTrackedBeam(b);
+    const tick = Math.min(dt, Math.max(0, b.life - b.t));
+    if (tick > 0){
+      const payload = makeBeamPayload(b, tick);
+      for (const resolve of beamResolvers){
+        try {
+          resolve(payload);
+        } catch {}
+      }
+    }
+    b.t += dt;
+    if (b.t >= b.life) beams.splice(i, 1);
+  }
 }
 
 export function consumeHitsCircle(cx, cy, r, handler){
@@ -92,8 +219,13 @@ export function forEachHitsCircle(cx, cy, r, handler){
 }
 
 export function draw(g){
-  for(const s of shots) Theme.drawProjectile(g, s);
+  for(const s of shots){
+    try { Theme.drawProjectile(g, s); } catch {}
+  }
+  for (const b of beams){
+    try { Theme.drawBeam?.(g, b); } catch {}
+  }
 }
 
-export const Projectiles = { spawn, reset, update, draw, consumeHitsCircle, forEachHitsCircle };
+export const Projectiles = { spawn, fireBeam, registerBeamResolver, reset, update, draw, consumeHitsCircle, forEachHitsCircle };
 

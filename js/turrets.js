@@ -6,6 +6,7 @@ import { Theme } from './theme.js';
 import { Projectiles } from './projectiles.js'; // player shots
 import { Particles } from './particles.js';     // impact effects
 import { SFX } from './sfx.js';
+import { Powerups } from './powerups.js';
 
 // --- State -------------------------------------------------------------------
 const turrets = [];   // { x, y, type, size, cool, hp, maxHp, fxSparkT, fxSmokeT }
@@ -108,6 +109,48 @@ function fireAt(t, x1, y1){
   });
 }
 
+function overlapsPlayer(t, p){
+  if (!p) return false;
+  const pr = CONFIG.PLAYER?.SQUASH_R ?? 18;
+  const tr = t.size * 0.9;
+  const dx = t.x - p.x;
+  const dy = t.y - p.y;
+  const r = pr + tr;
+  return dx*dx + dy*dy <= r*r;
+}
+
+function distPointToSegmentSq(px, py, x1, y1, x2, y2){
+  const vx = x2 - x1, vy = y2 - y1;
+  const wx = px - x1, wy = py - y1;
+  const c1 = vx*wx + vy*wy;
+  if (c1 <= 0) return (px-x1)*(px-x1) + (py-y1)*(py-y1);
+  const c2 = vx*vx + vy*vy;
+  if (c2 <= c1) return (px-x2)*(px-x2) + (py-y2)*(py-y2);
+  const b = c1 / c2;
+  const bx = x1 + b * vx, by = y1 + b * vy;
+  return (px-bx)*(px-bx) + (py-by)*(py-by);
+}
+
+Projectiles.registerBeamResolver?.((beam)=>{
+  for (let i = turrets.length - 1; i >= 0; i--){
+    const t = turrets[i];
+    const hitRadius = t.size * 0.9;
+    const damage = Math.max(0, beam.damageAt?.(t.x, t.y, hitRadius) ?? 0);
+    if (damage <= 0.01) continue;
+    t.hp -= damage;
+    if (Math.random() < Math.min(0.45, 0.07 + damage * 0.5)){
+      Particles.spawnImpact(t.x, t.y, 'damage', Math.max(0.25, damage / 5));
+    }
+    if (t.hp <= 0){
+      if (!t.boss) Powerups.spawnFromTurret?.(t.x, t.y, t.type);
+      Particles.spawnImpact(t.x, t.y, 'explosion', t.maxHp / 16);
+      SFX.playEnemyExplode?.();
+      world.enemyDestroyed = (world.enemyDestroyed | 0) + 1;
+      turrets.splice(i, 1);
+    }
+  }
+});
+
 // --- API ---------------------------------------------------------------------
 export function reset(){
   turrets.length = 0;
@@ -165,6 +208,21 @@ export function update(dt){
       continue;
     }
 
+    // Body collision: walking over a turret hurts the player and crushes the turret.
+    if (world.player && !world.player.dead && overlapsPlayer(t, world.player)){
+      const typeDef = getTurretTypeDef(t.type);
+      const collisionDamage = Math.max(3, Math.round((typeDef.bulletDamage ?? 8) * 0.8));
+      world.player.hp = Math.max(0, (world.player.hp ?? world.player.maxHp ?? 1) - collisionDamage);
+      Particles.spawnImpact(t.x, t.y, 'damage', Math.max(0.45, collisionDamage / 10));
+      Particles.spawnImpact(t.x, t.y, 'explosion', t.maxHp / 16);
+      SFX.playHit?.(collisionDamage);
+      SFX.playEnemyExplode?.();
+      if (!t.boss) Powerups.spawnFromTurret?.(t.x, t.y, t.type);
+      world.enemyDestroyed = (world.enemyDestroyed | 0) + 1;
+      turrets.splice(i, 1);
+      continue;
+    }
+
     // player bullets hitting turrets
     const hitRadius = t.size * 0.9;
     Projectiles.consumeHitsCircle(t.x, t.y, hitRadius, (proj) => {
@@ -172,10 +230,11 @@ export function update(dt){
       t.hp -= damage;
       Particles.spawnImpact(proj.x, proj.y, 'playerShot', 0.6);
       Particles.spawnImpact(proj.x, proj.y, 'damage', damage / 12);
-      SFX.playHit?.(damage);
+      if (proj.type !== 'beamer') SFX.playHit?.(damage);
     });
 
     if (t.hp <= 0){
+      if (!t.boss) Powerups.spawnFromTurret?.(t.x, t.y, t.type);
       Particles.spawnImpact(t.x, t.y, 'explosion', t.maxHp / 16);
       SFX.playEnemyExplode?.();
       world.enemyDestroyed = (world.enemyDestroyed | 0) + 1;

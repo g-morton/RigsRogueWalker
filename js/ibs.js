@@ -19,6 +19,18 @@ const LINES = [
   "Yikes","Run","Watch out","Mind the gap","I'm innocent", "Help", "Why oh why?"
 ];
 
+function distPointToSegmentSq(px, py, x1, y1, x2, y2){
+  const vx = x2 - x1, vy = y2 - y1;
+  const wx = px - x1, wy = py - y1;
+  const c1 = vx*wx + vy*wy;
+  if (c1 <= 0) return (px-x1)*(px-x1) + (py-y1)*(py-y1);
+  const c2 = vx*vx + vy*vy;
+  if (c2 <= c1) return (px-x2)*(px-x2) + (py-y2)*(py-y2);
+  const b = c1 / c2;
+  const bx = x1 + b * vx, by = y1 + b * vy;
+  return (px-bx)*(px-bx) + (py-by)*(py-by);
+}
+
 // ---------------------------------------------------------------------------
 // Utils
 function rand(a,b){ return a + Math.random()*(b-a); }
@@ -103,6 +115,37 @@ function spawnOne(forcedY = null){
 }
 
 function spawnWave(n){ for (let i=0;i<Math.max(1,n|0);i++) spawnOne(); }
+
+Projectiles.registerBeamResolver?.((beam)=>{
+  const r = CONFIG.IBS.R;
+  for (let i = ibs.length - 1; i >= 0; i--){
+    const p = ibs[i];
+    const damage = Math.max(0, beam.damageAt?.(p.x, p.y, r) ?? 0);
+    if (damage <= 0.01) continue;
+    p.hp -= damage;
+    p.lastHit = { damage, vx: beam.x2 - beam.x1, vy: beam.y2 - beam.y1 };
+    if (Math.random() < Math.min(0.45, 0.08 + damage * 0.6)){
+      Particles.spawnImpact(p.x, p.y, 'blood', Math.max(0.35, damage / 4), {
+        directional: true, dirX: beam.x2 - beam.x1, dirY: beam.y2 - beam.y1
+      });
+    }
+    if (p.hp <= 0){
+      const hit = p.lastHit || { damage: 1, vx: 0, vy: -1 };
+      Particles.spawnImpact(p.x, p.y, 'blood', Math.max(0.6, hit.damage / 7), {
+        directional: true, dirX: hit.vx, dirY: hit.vy
+      });
+      splats.push(makeSplat(p.x, p.y, {
+        mode: 'impact',
+        damage: hit.damage,
+        dirX: hit.vx,
+        dirY: hit.vy
+      }));
+      SFX.playIbsSplat?.();
+      ibs.splice(i,1);
+      world.ibsHit = (world.ibsHit|0) + 1;
+    }
+  }
+});
 
 // ---------------------------------------------------------------------------
 // API
