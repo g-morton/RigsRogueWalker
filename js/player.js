@@ -147,29 +147,47 @@ export class Player{
 
   addMediumRigMark(){
     const marks = this.rigMarks || (this.rigMarks = []);
-    const cardinal = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];
-    const mk = {
-      group: 'mark',
-      kind: (Math.random() < 0.5) ? 'line' : (Math.random() < 0.5 ? 'dot' : 'plate'),
-      ox: (Math.random() * 26) - 13,
-      oy: (Math.random() * 18) - 9,
-      rot: cardinal[(Math.random() * cardinal.length) | 0],
-      size: 1 + Math.random() * 1.25,
-      alt: Math.random() < 0.35
+    const protrusionCount = marks.reduce((n, e)=> n + (e?.group === 'protrusion' ? 1 : 0), 0);
+    const side = (protrusionCount % 2 === 0) ? -1 : 1;
+    const weightedPick = (entries)=>{
+      let total = 0;
+      for (const e of entries) total += Math.max(0, e.w ?? 1);
+      let r = Math.random() * Math.max(1, total);
+      for (const e of entries){
+        r -= Math.max(0, e.w ?? 1);
+        if (r <= 0) return e.k;
+      }
+      return entries[entries.length - 1].k;
     };
-    marks.push(mk);
+    const forwardKinds = [{ k:'mast_orb', w:1 }];
+    const rearKinds = [
+      { k:'pointed_mag', w:1.35 },
+      { k:'capsule_cell', w:1.25 },
+      { k:'l_bracket', w:1.15 },
+      { k:'u_shroud', w:1.00 },
+      { k:'ribbed_pack', w:0.95 },
+      { k:'node_spine', w:0.85 },
+      { k:'orbital_pod', w:0.78 },
+      { k:'ring_port', w:0.55 }
+    ];
+    const chooseForward = Math.random() < 0.22;
+    const pool = chooseForward ? forwardKinds : rearKinds;
+    const pk = weightedPick(pool);
+    const isForward = chooseForward;
 
-    const side = Math.random() < 0.5 ? -1 : 1;
-    const protrusionKinds = ['antenna', 'exhaust', 'tank', 'ammo'];
-    const pk = protrusionKinds[(Math.random() * protrusionKinds.length) | 0];
-    const isAntenna = pk === 'antenna';
-    const ox = side * (isAntenna ? (3 + Math.random() * 8) : (2 + Math.random() * 6));
-    const oy = isAntenna
-      ? (-6 + Math.random() * 12)  // can sit/extend forward
-      : (6 + Math.random() * 10);  // rear-only for shape modules
-    const rot = isAntenna
-      ? (-Math.PI * 0.5)           // poke toward front
-      : (Math.PI * 0.5);           // point backward
+    // Expanding rear lattice: as upgrades accumulate, sockets grow farther back and wider out.
+    const pairIdx = (protrusionCount / 2) | 0;      // left/right pair index
+    const depth = (pairIdx / 3) | 0;                // every 3 pairs pushes to a deeper "ring"
+    const lane = pairIdx % 3;                       // 0..2 side lanes per ring
+    const laneBase = 5.2 + lane * 2.4;              // start wider from body centerline
+    const spreadGrow = depth * 1.25;                // widen with depth
+    const rearY = 13.0 + pairIdx * 1.65 + depth * 1.15; // start outside torso, then keep extending rearward
+
+    const ox = side * (isForward ? (4 + Math.random() * 8) : (laneBase + spreadGrow + Math.random() * 0.85));
+    const oy = isForward
+      ? (-8 + Math.random() * 10)        // front half for mast/antenna styles
+      : (rearY + (Math.random() * 1.0 - 0.5)); // progressively farther rear with slight jitter
+    const rot = isForward ? (-Math.PI * 0.5) : (Math.PI * 0.5);
     marks.push({
       group: 'protrusion',
       kind: pk,
@@ -177,7 +195,7 @@ export class Player{
       ox,
       oy,
       rot,
-      size: 0.9 + Math.random() * 1.4
+      size: isForward ? (1.05 + Math.random() * 0.85) : (1.28 + Math.random() * 0.95)
     });
 
     const maxMarks = 36;

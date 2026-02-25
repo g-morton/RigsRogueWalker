@@ -752,37 +752,8 @@ function drawRigMarks(g, p){
   const marks = p.rigMarks;
   if (!Array.isArray(marks) || !marks.length) return;
   for (const m of marks){
-    if (m.group === 'protrusion'){
-      drawRigProtrusion(g, m);
-      continue;
-    }
-    const ox = m.ox ?? 0;
-    const oy = m.oy ?? 0;
-    const size = m.size ?? 1;
-    const rot = m.rot ?? 0;
-    const tone = m.alt ? BLUE : BG;
-    g.save();
-    g.translate(ox, oy);
-    g.rotate(rot);
-    if (m.kind === 'line'){
-      g.strokeStyle = tone;
-      g.lineWidth = 1.2 + size * 0.7;
-      g.beginPath();
-      g.moveTo(-2.8 * size, 0);
-      g.lineTo(2.8 * size, 0);
-      g.stroke();
-    } else if (m.kind === 'dot'){
-      g.beginPath();
-      g.arc(0, 0, 1.1 + size * 0.9, 0, Math.PI * 2);
-      g.fillStyle = tone;
-      g.fill();
-    } else {
-      const w = 2.4 + size * 2.6;
-      const h = 1.6 + size * 1.8;
-      g.fillStyle = tone;
-      g.fillRect(-w / 2, -h / 2, w, h);
-    }
-    g.restore();
+    if (m.group !== 'protrusion') continue;
+    drawRigProtrusion(g, m);
   }
 }
 
@@ -796,35 +767,88 @@ function drawRigProtrusion(g, m){
   g.rotate(rot);
   g.fillStyle = INK;
   g.strokeStyle = BG;
-  if (m.kind === 'antenna'){
-    g.lineWidth = 1.1;
+  if (m.kind === 'mast_orb'){
+    g.lineWidth = 1.05;
     g.beginPath();
-    g.moveTo(0, 0);
-    g.lineTo(5.5 * size, 0);
+    g.moveTo(-0.2 * size, -0.1 * size);
+    g.lineTo(7.3 * size, -0.1 * size);
+    g.moveTo(1.5 * size, -1.9 * size);
+    g.lineTo(6.4 * size, -1.9 * size);
     g.stroke();
     g.beginPath();
-    g.arc(6.7 * size, 0, 1.1 + size * 0.35, 0, Math.PI * 2);
+    g.arc(8.7 * size, 0, 1.15 + size * 0.36, 0, Math.PI * 2);
     g.fill();
     g.lineWidth = 0.9;
     g.stroke();
-  } else if (m.kind === 'exhaust'){
-    g.fillRect(0, -1.8 * size, 4.2 * size, 3.6 * size);
-    g.lineWidth = 1.0;
-    g.strokeRect(0, -1.8 * size, 4.2 * size, 3.6 * size);
-    g.fillStyle = BG;
-    g.fillRect(4.2 * size, -0.6 * size, 1.4 * size, 1.2 * size);
-  } else if (m.kind === 'tank'){
+  } else if (m.kind === 'u_shroud'){
+    const w = 7.8 * size, h = 5.9 * size;
+    g.fillRect(-w * 0.5, -h * 0.5, w, h * 0.34);
+    g.fillRect(-w * 0.5, -h * 0.5, w * 0.21, h);
+    g.fillRect(w * 0.29, -h * 0.5, w * 0.21, h);
+  } else if (m.kind === 'orbital_pod'){
     g.beginPath();
-    g.arc(3.2 * size, 0, 2.1 * size, 0, Math.PI * 2);
+    g.arc(1.6 * size, -0.45 * size, 2.65 * size, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    g.arc(4.35 * size, 1.35 * size, 1.45 * size, 0, Math.PI * 2);
     g.fill();
     g.lineWidth = 1.0;
+    g.strokeStyle = BG;
     g.stroke();
+  } else if (m.kind === 'l_bracket'){
+    g.fillRect(-0.75 * size, -3.1 * size, 1.8 * size, 7.6 * size);
+    g.fillRect(-1.9 * size, 2.45 * size, 3.0 * size, 1.9 * size);
+  } else if (m.kind === 'ribbed_pack'){
+    const w = 4.9 * size, h = 8.9 * size;
+    g.fillRect(-w * 0.5, -h * 0.5, w, h);
+    g.fillRect(-w * 0.76, -h * 0.24, 1.25 * size, 1.8 * size);
+    g.fillRect(w * 0.50, -h * 0.24, 1.25 * size, 1.8 * size);
+    g.fillRect(-w * 0.76, h * 0.06, 1.25 * size, 1.8 * size);
+    g.fillRect(w * 0.50, h * 0.06, 1.25 * size, 1.8 * size);
+  } else if (m.kind === 'capsule_cell'){
+    const w = 3.6 * size, h = 8.3 * size;
+    g.fillRect(-w * 0.5, -h * 0.36, w, h * 0.72);
+    g.beginPath();
+    g.arc(0, -h * 0.36, w * 0.5, Math.PI, 0);
+    g.arc(0, h * 0.36, w * 0.5, 0, Math.PI);
+    g.closePath();
+    g.fill();
+    g.lineWidth = 0.85;
+    g.strokeStyle = BG;
+    g.beginPath();
+    g.moveTo(-w * 0.46, -h * 0.2);
+    g.lineTo(w * 0.46, -h * 0.2);
+    g.moveTo(-w * 0.46, h * 0.2);
+    g.lineTo(w * 0.46, h * 0.2);
+    g.stroke();
+  } else if (m.kind === 'node_spine'){
+    g.lineWidth = 1.05;
+    g.beginPath();
+    g.moveTo(0, -5.4 * size);
+    g.lineTo(0, 5.4 * size);
+    g.stroke();
+    g.beginPath();
+    g.arc(0, -2.15 * size, 0.82 * size, 0, Math.PI * 2);
+    g.arc(0, 2.05 * size, 1.25 * size, 0, Math.PI * 2);
+    g.fill();
+  } else if (m.kind === 'ring_port'){
+    g.lineWidth = 1.0 + size * 0.42;
+    g.beginPath();
+    g.arc(0, 0, 2.35 * size, 0, Math.PI * 2);
+    g.stroke();
+    g.beginPath();
+    g.arc(0, 0, 1.55 * size, 0, Math.PI * 2);
+    g.fill();
   } else {
-    g.fillRect(0, -2.2 * size, 5.0 * size, 4.4 * size);
-    g.lineWidth = 1.0;
-    g.strokeRect(0, -2.2 * size, 5.0 * size, 4.4 * size);
-    g.fillStyle = BG;
-    g.fillRect(1.0 * size, -0.3 * size, 3.0 * size, 0.6 * size);
+    // pointed_mag
+    const w = 3.4 * size, h = 6.7 * size;
+    g.fillRect(-w * 0.5, -h * 0.5, w, h * 0.72);
+    g.beginPath();
+    g.moveTo(-w * 0.5, h * 0.29);
+    g.lineTo(0, h * 0.52);
+    g.lineTo(w * 0.5, h * 0.29);
+    g.closePath();
+    g.fill();
   }
   g.restore();
 }
