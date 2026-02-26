@@ -1,12 +1,16 @@
 import { CONFIG } from './config.js';
 
 const SHOT_FILES = {
-  small: './assets/sounds/shoot-small.wav',
+  rifle: './assets/sounds/shoot-rifle.wav',
+  longrifle: './assets/sounds/shoot-longrifle.wav',
   shotgun: './assets/sounds/shoot-shotgun.wav',
-  beam: './assets/sounds/shoot-beam.wav',
+  heavyshotgun: './assets/sounds/shoot-heavyshotgun.wav',
+  beamer: './assets/sounds/shoot-beamer.wav',
   chaingun: './assets/sounds/shoot-chaingun.wav',
-  big: './assets/sounds/shoot-big.wav',
-  rocket: './assets/sounds/shoot-rocket.wav'
+  chaincannon: './assets/sounds/shoot-heavychaingun.wav',
+  cannon: './assets/sounds/shoot-cannon.wav',
+  rocket: './assets/sounds/shoot-rocket.wav',
+  rocketpod: './assets/sounds/shoot-rocket.wav'
 };
 const CHAIN_WINDUP_FILE = './assets/sounds/chaingun-windup.wav';
 
@@ -29,15 +33,16 @@ const PICKUP_COUNT = Math.max(1, CONFIG.SFX?.PICKUP_COUNT ?? 5);
 const PICKUP_FILES = Array.from({ length: PICKUP_COUNT }, (_, i) => `./assets/sounds/pickup-${i + 1}.wav`);
 
 const SHOT_BY_WEAPON = {
-  rifle: 'small',
-  longrifle: 'small',
+  rifle: 'rifle',
+  longrifle: 'longrifle',
   shotgun: 'shotgun',
-  heavyshotgun: 'shotgun',
-  beamer: 'beam',
+  heavyshotgun: 'heavyshotgun',
+  beamer: 'beamer',
   chaingun: 'chaingun',
-  chaincannon: 'chaingun',
-  cannon: 'big',
-  rocket: 'rocket'
+  chaincannon: 'chaincannon',
+  cannon: 'cannon',
+  rocket: 'rocket',
+  rocketpod: 'rocketpod'
 };
 
 const pools = new Map();

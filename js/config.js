@@ -41,42 +41,54 @@ export const CONFIG = {
     TWIST_DEG_CANVAS: 115,
     TWIST_LERP: 0.15,
     TWIST_LERP_CANVAS: 0.36,
+    WEAPON_BREAK_FRAC: 0.33,
     SQUASH_R: 18
   },
   WEAPONS: {
-    rifle:   { cooldown: 0.50, muzzle:{x:6, y:-12} },
-    longrifle: { cooldown: 0.70, muzzle:{x:8, y:-16} },
+    rifle:   { cooldown: 0.40, muzzle:{x:6, y:-12} },
+    longrifle: { cooldown: 0.50, muzzle:{x:8, y:-16} },
     shotgun: { cooldown: 1.50, muzzle:{x:8, y:-6}, pellets: 7, spreadDeg: 3 },
     heavyshotgun: { cooldown: 1.85, muzzle:{x:10, y:-4}, pellets: 3, spreadDeg: 4 },
     beamer:  { cooldown: 1.50, muzzle:{x:6, y:-12} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},
       windup: 0.80,
-      heatPerSec: 0.20,
-      coolPerSec: 0.10
+      heatPerSec: 0.10,
+      coolPerSec: 0.30
     },
     chaincannon:{
       cooldown: 0.12, muzzle:{x:0, y:-56},
       windup: 0.95,
-      heatPerSec: 0.25,
+      heatPerSec: 0.20,
       coolPerSec: 0.15
     },
+    rocketpod: {
+      cooldown: 2.50, muzzle:{x:0, y:-18},
+      burstCount: 6,
+      burstInterval: 0.085,
+      spreadDeg: 6
+    },
     cannon:  { cooldown: 2.00, muzzle:{x:18,y:-2}  },
-    rocket:  { cooldown: 1.50, muzzle:{x:0, y:-18} }
+    rocket:  { cooldown: 1.60, muzzle:{x:0, y:-18} }
   },
   PROJECTILES: {
-    rifle:    { speed: 950, life: 3, r: 3, damage: 8 },
+    rifle:    { speed: 950, life: 3, r: 3, damage: 10 },
     longrifle:{ speed: 1200, life: 3.2, r: 4, damage: 15 },
     shotgun:  { speed: 950, life: 3, r: 3, damage: 5 },
-    heavyshotgun:{ speed: 860, life: 2.8, r: 5, damage: 15 },
+    heavyshotgun:{ speed: 900, life: 2.8, r: 5, damage: 15 },
     beamer:   {
       range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 5,
       coreRadius: 7, lightningRadius: 20,
       nearFrac: 0.25, farDamageMul: 0.10,
       closeBoostFrac: 0.25, closeBoostMul: 2.8
     },
-    chaingun: { speed: 600, life: 2, len: 12, w: 3, damage: 6 },
-    chaincannon: { speed: 600, life: 2.1, len: 16, w: 4, damage: 12 },
+    chaingun: { speed: 600, life: 2, len: 12, w: 3, damage: 5 },
+    chaincannon: { speed: 600, life: 2.1, len: 16, w: 4, damage: 10 },
+    rocketpod: {
+      speed: 240, life: 2.2, accel: 780, vmax: 760, len: 10, w: 4, damage: 15,
+      ramp_sec: 0.48, accel_base: 0.18, accel_peak: 2.2,
+      trail_dt: 0.04, trail_len: 9, puff_r0: 1.5, puff_growth: 18, puff_fade: 1.6
+    },
     cannon:   { speed: 900, life: 2.0, r: 5, damage: 70 },
     rocket: {
       speed: 200, life: 2.6, accel: 950, vmax: 1000, len: 16, w: 6, damage: 50,

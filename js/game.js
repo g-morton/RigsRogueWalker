@@ -19,7 +19,7 @@ let loopSeq = 0;
 let bossPhase = 'none'; // none | clearing | approach | fight
 let godMode = false;
 
-const DEBUG_WEAPON_ORDER = ['rifle', 'longrifle', 'shotgun', 'heavyshotgun', 'chaingun', 'chaincannon', 'beamer', 'rocket', 'cannon'];
+const DEBUG_WEAPON_ORDER = ['rifle', 'longrifle', 'shotgun', 'heavyshotgun', 'chaingun', 'chaincannon', 'beamer', 'rocket', 'rocketpod', 'cannon'];
 const CHASSIS_PRESETS = {
   amass: {
     hp: 180,
@@ -32,7 +32,7 @@ const CHASSIS_PRESETS = {
     hp: 120,
     speedMul: 1.0,
     weapons: { left: 'rocket', right: 'rifle' },
-    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'rocket'],
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'rocket', 'rocketpod'],
     allowedMounts: ['left', 'right']
   },
   talon: {
@@ -350,7 +350,7 @@ export function wireUI(){
   const soundToggle = document.getElementById('soundToggle');
   if (soundToggle){
     const syncSoundLabel = () => {
-      soundToggle.textContent = `Sound: ${SFX.isMuted?.() ? 'Off' : 'On'}`;
+      soundToggle.textContent = SFX.isMuted?.() ? 'SFX×' : 'SFX';
     };
     syncSoundLabel();
     soundToggle.addEventListener('click', (e)=>{

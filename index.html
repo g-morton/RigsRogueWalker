@@ -25,139 +25,204 @@
     }
 
     #topUi {
-      height: 68px;
-      flex: 0 0 68px;
+      height: 92px;
+      flex: 0 0 92px;
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 6px 8px 7px;
+      flex-direction: column;
+      gap: 0;
+      padding: 0;
       box-sizing: border-box;
       background: #111;
       color: #fff;
       border-bottom: 2px solid #000;
     }
 
-    #hud {
-      position: static;
-      background: transparent;
-      color: #fff;
-      padding: 0 2px 0 0;
-      border-radius: 0;
-      font-size: 12px;
-      white-space: nowrap;
+    #hudHeader {
+      height: 58px;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px 6px;
+      box-sizing: border-box;
+    }
+
+    #hudLeft {
       min-width: 0;
       flex: 1 1 auto;
-    }
-
-    #playerHudCompact {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      max-width: 100%;
+      justify-content: space-between;
     }
 
-    #playerStats {
-      display: grid;
-      grid-template-columns: repeat(2, max-content);
-      column-gap: 12px;
-      row-gap: 3px;
-      line-height: 1.1;
-    }
-
-    .playerStat {
-      display: inline-flex;
-      align-items: baseline;
-    }
-
-    .hudLabel {
-      opacity: 0.78;
-      margin-right: 4px;
+    #hudTitle {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.01em;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-size: 10px;
+    }
+
+    #hudTitle span {
+      opacity: 0.92;
+      font-weight: 500;
+    }
+
+    #hudMeta {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      line-height: 1;
+      white-space: nowrap;
+      font-size: 12px;
       font-weight: 700;
     }
 
-    .hudValue {
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      font-size: 13px;
+    #hudMeta .metaPair {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 7px;
     }
 
-    .hudValue.fixed {
-      display: inline-block;
-      width: 68px;
-      text-align: right;
+    #hudMeta .label {
+      opacity: 0.9;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    #hudMeta .value {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      transform: translateY(1px);
+    }
+
+    #hudRight {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 14px;
+      flex: 0 0 auto;
+      min-width: 290px;
+    }
+
+    #scorePanel {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+      min-width: 170px;
+      gap: 3px;
+      margin-top: 1px;
+    }
+
+    .scoreRow {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .scoreRow strong {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      line-height: 0.85;
+    }
+
+    .scoreRow .scoreNum {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 0.9;
       font-variant-numeric: tabular-nums;
+    }
+
+    .scoreRow.low {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    .scoreRow.low .scoreNum {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    #controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    #controls a {
+      color: #fff;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 0;
+      background: transparent;
+      border-radius: 0;
+    }
+
+    #soundToggle {
+      text-decoration: none !important;
+      border: 2px solid #fff;
+      width: 32px;
+      height: 32px;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 900;
+      border-radius: 7px !important;
+      letter-spacing: 0;
     }
 
     #playerHpWrap {
+      position: relative;
       width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.18);
-      border: 1px solid #000;
+      height: 30px;
+      background: #d9d9d9;
       box-sizing: border-box;
       overflow: hidden;
-      border-radius: 2px;
-    }
-
-    #playerHpRow {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #playerHpValue {
-      min-width: 62px;
-      text-align: right;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      font-variant-numeric: tabular-nums;
-      opacity: 0.95;
+      border-radius: 0;
     }
 
     #playerHpFill {
       width: 100%;
       height: 100%;
-      background: #2a66ff;
+      background: #2f63e5;
       transition: width 80ms linear;
-    }
-
-    #controls {
-      position: static;
-      display: flex;
-      align-items: flex-start;
-      align-content: flex-start;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      gap: 6px;
-      max-width: 46%;
-    }
-
-    #controls a {
-      display: inline-block;
-      padding: 4px 9px;
-      border-radius: 7px;
-      text-decoration: none;
-      background: #fff;
-      color: #000;
-      margin-left: 0;
-      font-size: 12px;
-      font-weight: 700;
     }
 
     #godModeTag {
       display: none;
-      padding: 4px 8px;
-      border-radius: 7px;
-      background: #e01a1a;
-      color: #fff;
-      font-size: 12px;
+      color: #ff1d1d;
+      font-size: 16px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
+      line-height: 0.9;
+      transform: translateY(1px);
+    }
+
+    #playerHpValue {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
     }
 
     #playArea {
@@ -344,30 +409,34 @@
   <div id="bossBanner">Boss Approaching</div>
   <div id="gameFrame">
     <div id="topUi">
-      <div id="hud">
-        <div id="playerHudCompact">
-          <div id="playerStats">
-            <span class="playerStat"><span class="hudLabel">Score</span><span class="hudValue fixed" id="scoreNow">0</span></span>
-            <span class="playerStat"><span class="hudLabel">Best</span><span class="hudValue fixed" id="scoreBest">0</span></span>
-            <span class="playerStat"><span class="hudLabel">Dist</span><span class="hudValue fixed" id="distNow">0</span></span>
-            <span class="playerStat"><span class="hudLabel">Level</span><span class="hudValue fixed" id="levelNow">1</span></span>
+      <div id="hudHeader">
+        <div id="hudLeft">
+          <div id="hudTitle">Rigs <span>Rogue Walker</span></div>
+          <div id="hudMeta">
+            <span class="metaPair"><span class="label">Level</span><span class="value" id="levelNow">1</span></span>
+            <span class="metaPair"><span class="label">Distance</span><span class="value" id="distNow">0</span></span>
+            <span id="godModeTag">GodMode</span>
           </div>
-          <div id="playerHpRow">
-            <div id="playerHpWrap"><div id="playerHpFill"></div></div>
-            <span id="playerHpValue">HP 0/0</span>
+        </div>
+        <div id="hudRight">
+          <div id="scorePanel">
+            <div class="scoreRow"><span>Score</span><span class="scoreNum" id="scoreNow">0</span></div>
+            <div class="scoreRow low"><span>High</span><span class="scoreNum" id="scoreBest">0</span></div>
+          </div>
+          <div id="controls">
+            <a href="#" id="restart">Menu</a>
+            <a href="#" id="soundToggle" aria-label="Toggle Sound">SFX</a>
           </div>
         </div>
       </div>
-      <div id="controls">
-        <a href="#" id="restart">Start ></a>
-        <a href="#" id="soundToggle">Sound: On</a>
-        <span id="godModeTag">GodMode</span>
+      <div id="playerHpWrap">
+        <div id="playerHpFill"></div>
+        <span id="playerHpValue">HP 0/0</span>
       </div>
     </div>
 
     <div id="playArea">
       <div id="bossHud">
-        <!--<div id="bossLabel">Boss Integrity</div>-->
         <div id="bossBarWrap"><div id="bossBarFill"></div></div>
       </div>
       <canvas id="game" width="768" height="1024"></canvas>
@@ -379,7 +448,7 @@
     <div id="splashCard">
       <h1 id="splashTitle">Rigs - Rogue walker</h1>
       <div id="splashBody">
-        <strong>Rules:</strong> See how far you can travel, destroy enemies, while avoiding hurting the innocent bystanders.<br>
+        <strong>Rules:</strong> See how far you can travel, destroy enemies, while avoiding hurting innocent bystanders.<br>
         <strong>Controls:</strong> Use WSAD or cursor keys to move, and mouse to target and left/right buttons to shoot.<br>
         <strong>Power-ups:</strong> Destroy enemies to reveal upgrades and new weapons<br>
         'D' Damage, 'F' Projectile speed, 'R' Fire rate, 'M' Move speed, HP Repair, L-* Left weapon mount, R-* Right weapon mount.<br>
@@ -387,11 +456,11 @@
           <div id="chassisTitle">Select your chassis manufacturer:</div>
           <div id="chassisOptions">
             <label class="chassisOption">
-              <input type="radio" name="chassis" value="amass">
+              <input type="radio" name="chassis" value="amass" checked>
               <div><strong>Amass Rig</strong><span>Very heavy chassis, cannon & rifle.</span></div>
             </label>
             <label class="chassisOption">
-              <input type="radio" name="chassis" value="windward" checked>
+              <input type="radio" name="chassis" value="windward">
               <div><strong>Windward Rig</strong><span>Medium chassis, rocket & rifle.</span></div>
             </label>
             <label class="chassisOption">

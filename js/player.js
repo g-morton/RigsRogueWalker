@@ -17,6 +17,7 @@ const WEAPON_SIZE = {
   chaingun: 2,
   chaincannon: 4,
   rocket: 3,
+  rocketpod: 3,
   cannon: 4
 };
 const CHAIN_WEAPONS = new Set(['chaingun', 'chaincannon']);
@@ -42,6 +43,7 @@ export class Player{
       left:  { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false },
       right: { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false }
     };
+    this.rocketPodBurst = { left: null, right: null };
 
     this.speedMul = Math.max(0.5, opts.speedMul ?? 1.0);
     this.reloadMul = 1.0;
@@ -105,7 +107,8 @@ export class Player{
       this.damageBucket += (this.lastHp - hpNow);
     }
     this.lastHp = hpNow;
-    const threshold = this.maxHp * 0.20;
+    const breakFrac = Math.max(0.2, Math.min(0.8, CONFIG.PLAYER.WEAPON_BREAK_FRAC ?? 0.20));
+    const threshold = this.maxHp * breakFrac;
     if (this.damageBucket >= threshold){
       const broke = this.breakLargestWeapon();
       if (broke){
@@ -139,6 +142,8 @@ export class Player{
     // Chaingun state machine: windup -> sustain fire -> overheat -> cooldown.
     this.updateChaingun('left', mouse.leftDown, dt);
     this.updateChaingun('right', mouse.rightDown, dt);
+    this.updateRocketPodBurst('left', dt);
+    this.updateRocketPodBurst('right', dt);
   }
 
   draw(g){
@@ -149,6 +154,7 @@ export class Player{
   setWeapon(side, type){
     if (side !== 'left' && side !== 'right') return;
     if (!this.allowedMounts?.has(side)) return;
+    this.rocketPodBurst[side] = null;
     this.weapons[side] = type || null;
     if (!CHAIN_WEAPONS.has(type)){
       const st = this.chaingun[side];
@@ -160,7 +166,8 @@ export class Player{
     this.setWeapon(side, type);
     const maxHp = Math.max(1, this.maxHp ?? 1);
     this.hp = Math.min(maxHp, (this.hp ?? maxHp) + maxHp * 0.25);
-    const threshold = maxHp * 0.20;
+    const breakFrac = Math.max(0.2, Math.min(0.8, CONFIG.PLAYER.WEAPON_BREAK_FRAC ?? 0.20));
+    const threshold = maxHp * breakFrac;
     this.damageBucket = Math.max(0, (this.damageBucket ?? 0) - threshold);
     this.lastHp = Math.max(0, this.hp ?? maxHp);
   }
@@ -257,6 +264,56 @@ export class Player{
     return { x: wx + forwardX * 20, y: wy + forwardY * 20, angle: a };
   }
 
+  getMuzzlePose(side, type){
+    const m = getMuzzleLocal(type);
+    const s = (side === 'left') ? -1 : 1;
+    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
+    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const lx = ax + s * m.x;
+    const ly = ay + m.y;
+    const a = this.angle;
+    const rx = lx * Math.cos(a) - ly * Math.sin(a);
+    const ry = lx * Math.sin(a) + ly * Math.cos(a);
+    return { x: this.x + rx, y: this.y + ry, angle: a, sideSign: s, muzzle: m };
+  }
+
+  fireRocketPodRound(side, burst){
+    if (this.dead) return false;
+    if (this.weapons[side] !== 'rocketpod') return false;
+    const pose = this.getMuzzlePose(side, 'rocketpod');
+    const total = Math.max(2, burst?.total ?? 5);
+    const idx = Math.max(0, burst?.fired ?? 0);
+    const spread = Math.max(0.01, burst?.spreadRad ?? (7 * Math.PI / 180));
+    const t = (total <= 1) ? 0 : (idx / (total - 1));
+    const fan = (t - 0.5) * 2 * spread;
+    const jitter = (Math.random() - 0.5) * spread * 0.32;
+    Projectiles.spawn(pose.x, pose.y, pose.angle + fan + jitter, 'rocketpod', {
+      speedMul: this.projSpeedMul,
+      damageMul: this.damageMul
+    });
+    SFX.playShot('rocketpod');
+    return true;
+  }
+
+  updateRocketPodBurst(side, dt){
+    const burst = this.rocketPodBurst[side];
+    if (!burst) return;
+    if (this.dead || this.weapons[side] !== 'rocketpod'){
+      this.rocketPodBurst[side] = null;
+      return;
+    }
+    burst.timer -= dt;
+    while (burst.timer <= 0 && burst.remaining > 0){
+      burst.fired += 1;
+      this.fireRocketPodRound(side, burst);
+      burst.remaining -= 1;
+      burst.timer += burst.interval;
+    }
+    if (burst.remaining <= 0){
+      this.rocketPodBurst[side] = null;
+    }
+  }
+
   shoot(side, type){
     if (this.dead) return;
     if (!type) return;
@@ -300,6 +357,25 @@ export class Player{
         });
       }
       SFX.playShot(type);
+      this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
+      return;
+    }
+
+    if (type === 'rocketpod'){
+      const def = CONFIG.WEAPONS.rocketpod || {};
+      const total = Math.max(2, def.burstCount ?? 5);
+      const interval = Math.max(0.03, def.burstInterval ?? 0.085);
+      const spreadRad = Math.max(1, def.spreadDeg ?? 7) * Math.PI / 180;
+      this.rocketPodBurst[side] = {
+        total,
+        fired: 0,
+        remaining: total - 1,
+        interval,
+        timer: interval,
+        spreadRad
+      };
+      this.fireRocketPodRound(side, this.rocketPodBurst[side]);
+      this.rocketPodBurst[side].fired = 1;
       this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
       return;
     }

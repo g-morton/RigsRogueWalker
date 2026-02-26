@@ -92,7 +92,7 @@ export function spawn(x, y, angle, type='rifle', mods={}){
     t: 0,
     ...def
   };
-  if (type === 'rocket'){
+  if (type === 'rocket' || type === 'rocketpod'){
     p.accel = def.accel;
     p.vmax = def.vmax * Math.max(1.0, speedMul);
     p.trail = []; p.trail_accum = 0;
@@ -143,7 +143,7 @@ export function update(dt){
   for(const s of shots){
     s.t += dt;
 
-    if (s.type === 'rocket'){
+    if (s.type === 'rocket' || s.type === 'rocketpod'){
       const v = Math.hypot(s.vx, s.vy);
       const nx = v>0 ? s.vx/v : 0, ny = v>0 ? s.vy/v : -1;
       const k = Math.min(1, s.t / s.ramp_sec);

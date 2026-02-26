@@ -92,7 +92,8 @@ export const Theme = {
         g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(x2, y2); g.stroke();
         break;
       }
-      case 'rocket': {
+      case 'rocket':
+      case 'rocketpod': {
         const v = Math.hypot(s.vx, s.vy) || 1;
         const nx = s.vx / v, ny = s.vy / v;
         const fx = s.x + nx * s.len, fy = s.y + ny * s.len;
@@ -976,6 +977,12 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       g.fillRect(-5, -16, 10, 32);  // tube
       g.fillRect(-3, -20, 6, 6);    // tip
       g.fillRect(-3, 16, 6, 6);     // tail
+      break;
+    case 'rocketpod':
+      g.fillRect(-6, -10, 12, 24);
+      g.fillRect(-8, -12, 16, 6);
+      g.fillRect(-8, 12, 16, 6);
+      g.fillRect(-12, 0, 24, 8);
       break;
   }
   g.restore();
