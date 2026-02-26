@@ -45,6 +45,7 @@ export const CONFIG = {
   },
   WEAPONS: {
     rifle:   { cooldown: 0.18, muzzle:{x:6, y:-12} },
+    shotgun: { cooldown: 0.56, muzzle:{x:8, y:-6}, pellets: 3, spreadDeg: 8 },
     beamer:  { cooldown: 1.35, muzzle:{x:6, y:-12} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},
@@ -57,6 +58,7 @@ export const CONFIG = {
   },
   PROJECTILES: {
     rifle:    { speed: 450, life: 3, r: 3, damage: 10 },
+    shotgun:  { speed: 900, life: 3, r: 6, damage: 10 },
     beamer:   {
       range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 9,
       coreRadius: 7, lightningRadius: 34,

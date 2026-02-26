@@ -8,7 +8,7 @@ import { getMuzzleLocal, getCooldownSec } from './weapons.js';
 
 const MAX_TWIST = CONFIG.PLAYER.TWIST_DEG * Math.PI/180;
 const MAX_TWIST_CANVAS = (CONFIG.PLAYER.TWIST_DEG_CANVAS ?? CONFIG.PLAYER.TWIST_DEG) * Math.PI/180;
-const WEAPON_SIZE = { rifle: 1, beamer: 2, chaingun: 2, rocket: 3, cannon: 4 };
+const WEAPON_SIZE = { rifle: 1, shotgun: 2, beamer: 2, chaingun: 2, rocket: 3, cannon: 4 };
 
 export class Player{
   constructor(){
@@ -252,6 +252,24 @@ export class Player{
         damageMul: this.damageMul,
         track: () => this.getBeamerPose(side)
       });
+      SFX.playShot(type);
+      this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
+      return;
+    }
+
+    if (type === 'shotgun'){
+      const def = CONFIG.WEAPONS.shotgun || {};
+      const pellets = Math.max(3, def.pellets ?? 3);
+      const spreadDeg = Math.max(1, def.spreadDeg ?? 8);
+      const spreadStep = (spreadDeg * Math.PI / 180);
+      const mid = (pellets - 1) * 0.5;
+      for (let i = 0; i < pellets; i++){
+        const da = (i - mid) * spreadStep;
+        Projectiles.spawn(wx, wy, a + da, 'shotgun', {
+          speedMul: this.projSpeedMul,
+          damageMul: this.damageMul
+        });
+      }
       SFX.playShot(type);
       this.cooldown[side] = getCooldownSec(type) * this.reloadMul;
       return;

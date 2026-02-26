@@ -10,6 +10,8 @@ const R = CONFIG.POWERUPS.RADIUS;
 const SIDE_WEAPON_DROPS = [
   { key:'L-Ri', type:'weapon', side:'left',  weapon:'rifle'    },
   { key:'R-Ri', type:'weapon', side:'right', weapon:'rifle'    },
+  { key:'L-Sg', type:'weapon', side:'left',  weapon:'shotgun'  },
+  { key:'R-Sg', type:'weapon', side:'right', weapon:'shotgun'  },
   { key:'L-Ch', type:'weapon', side:'left',  weapon:'chaingun' },
   { key:'R-Ch', type:'weapon', side:'right', weapon:'chaingun' },
   { key:'L-Be', type:'weapon', side:'left',  weapon:'beamer'   },

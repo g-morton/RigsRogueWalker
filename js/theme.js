@@ -71,6 +71,7 @@ export const Theme = {
   drawProjectile(g, s){
     switch(s.type){
       case 'rifle':
+      case 'shotgun':
       case 'cannon': {
         const r = s.r;
         g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI*2);
@@ -864,6 +865,18 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
     case 'rifle':
       g.fillRect(-4, -14, 6, 30);
       g.fillRect(0, 4, 10, 10);
+      break;
+    case 'shotgun':
+      g.fillRect(-2, -24, 14, 22);  // shorter top column
+      g.fillRect(-13, -2, 26, 15);  // side cross block
+      g.fillRect(0, 13, 10, 18);    // compact lower body
+      g.beginPath();                // tapered muzzle/foot
+      g.moveTo(-3, 35);
+      g.lineTo(13, 35);
+      g.lineTo(10, 47);
+      g.lineTo(0, 47);
+      g.closePath();
+      g.fill();
       break;
     case 'beamer':
       // Shorter, wider body with rounded emitter.

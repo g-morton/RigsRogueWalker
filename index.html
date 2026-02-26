@@ -107,6 +107,7 @@
       position: static;
       display: flex;
       align-items: center;
+      gap: 6px;
     }
 
     #controls a {
@@ -119,6 +120,18 @@
       margin-left: 0;
       font-size: 12px;
       font-weight: 700;
+    }
+
+    #godModeTag {
+      display: none;
+      padding: 4px 8px;
+      border-radius: 7px;
+      background: #e01a1a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     #playArea {
@@ -269,6 +282,8 @@
       </div>
       <div id="controls">
         <a href="#" id="restart">Start ></a>
+        <a href="#" id="soundToggle">Sound: On</a>
+        <span id="godModeTag">GodMode</span>
       </div>
     </div>
 
@@ -289,7 +304,8 @@
         <strong>Rules:</strong> See how far you can get, destroy enemies, while avoiding hurting any innocent bystanders.<br>
         <strong>Controls:</strong> Use cursor keys to move, and mouse to target and shoot.<br>
         <strong>Power-ups:</strong> Keep an eye out for upgrades.<br>
-        <strong>Key:</strong> D Damage up, F Projectile speed up, R Fire rate up, M Move speed up, HP Repair, L-* Left weapon swap, R-* Right weapon swap (includes Beamer).
+        <strong>Key:</strong> D Damage up, F Projectile speed up, R Fire rate up, M Move speed up, HP Repair, L-* Left weapon swap, R-* Right weapon swap (includes Shotgun and Beamer).<br>
+        <strong>Testing:</strong> G God mode, L cycle left weapon, R cycle right weapon, U add cosmetic upgrade.
       </div>
       <a href="#" id="splashPlay">Play</a>
     </div>

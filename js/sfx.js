@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 
 const SHOT_FILES = {
   small: './assets/sounds/shoot-small.wav',
+  shotgun: './assets/sounds/shoot-shotgun.wav',
   beam: './assets/sounds/shoot-beam.wav',
   chaingun: './assets/sounds/shoot-chaingun.wav',
   big: './assets/sounds/shoot-big.wav',
@@ -27,6 +28,7 @@ const IBS_SPLAT_FILES = Array.from({ length: IBS_SPLAT_COUNT }, (_, i) => `./ass
 
 const SHOT_BY_WEAPON = {
   rifle: 'small',
+  shotgun: 'shotgun',
   beamer: 'beam',
   chaingun: 'chaingun',
   cannon: 'big',
@@ -37,6 +39,8 @@ const pools = new Map();
 const POOL_SIZE = 6;
 let lastChaingunWindupAt = -1e9;
 const CHAIN_WINDUP_MIN_GAP_MS = 420;
+const SFX_MUTED_KEY = 'rrw_sfx_muted_v1';
+let muted = false;
 
 function makePool(url, size = POOL_SIZE){
   const arr = [];
@@ -59,6 +63,7 @@ function getPool(name){
 }
 
 function playFromPool(pool){
+  if (muted) return;
   if (!pool || !pool.clips.length) return;
   const a = pool.clips[pool.idx];
   pool.idx = (pool.idx + 1) % pool.clips.length;
@@ -69,7 +74,49 @@ function playFromPool(pool){
   } catch {}
 }
 
+function stopAll(){
+  for (const pool of pools.values()){
+    if (!pool?.clips?.length) continue;
+    for (const clip of pool.clips){
+      try{
+        clip.pause();
+        clip.currentTime = 0;
+      } catch {}
+    }
+  }
+}
+
+function loadMutedPref(){
+  try{
+    return localStorage.getItem(SFX_MUTED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function saveMutedPref(next){
+  try{
+    localStorage.setItem(SFX_MUTED_KEY, next ? '1' : '0');
+  } catch {}
+}
+
+function setMuted(next){
+  muted = !!next;
+  saveMutedPref(muted);
+  if (muted) stopAll();
+  return muted;
+}
+
+function toggleMuted(){
+  return setMuted(!muted);
+}
+
+function isMuted(){
+  return muted;
+}
+
 export function warmup(){
+  muted = loadMutedPref();
   for (const [name, url] of Object.entries(SHOT_FILES)){
     pools.set(name, makePool(url));
   }
@@ -128,4 +175,14 @@ export function playChaingunWindup(){
   playFromPool(pools.get('chaingun-windup'));
 }
 
-export const SFX = { warmup, playShot, playChaingunWindup, playHit, playEnemyExplode, playIbsSplat };
+export const SFX = {
+  warmup,
+  setMuted,
+  toggleMuted,
+  isMuted,
+  playShot,
+  playChaingunWindup,
+  playHit,
+  playEnemyExplode,
+  playIbsSplat
+};

@@ -17,10 +17,65 @@ let player = null;
 let rafId = null;
 let loopSeq = 0;
 let bossPhase = 'none'; // none | clearing | approach | fight
+let godMode = false;
+
+const DEBUG_WEAPON_ORDER = ['rifle', 'shotgun', 'chaingun', 'beamer', 'rocket', 'cannon'];
+
+function syncGodModeUI(){
+  const tag = document.getElementById('godModeTag');
+  if (!tag) return;
+  tag.style.display = godMode ? 'inline-block' : 'none';
+}
 
 function currentBossLevel(){
   const interval = Math.max(1, CONFIG.BOSS?.INTERVAL_DIST ?? 5000);
   return Math.max(1, Math.floor((world.nextBossDist | 0) / interval));
+}
+
+function cycleWeapon(side){
+  const p = world.player;
+  if (!p || p.dead) return;
+  const cur = p.weapons?.[side] ?? null;
+  const idx = DEBUG_WEAPON_ORDER.indexOf(cur);
+  const next = DEBUG_WEAPON_ORDER[(idx + 1 + DEBUG_WEAPON_ORDER.length) % DEBUG_WEAPON_ORDER.length];
+  p.setWeapon?.(side, next);
+}
+
+function applyCosmeticUpgrade(){
+  const p = world.player;
+  if (!p || p.dead) return;
+  p.addMediumRigMark?.();
+}
+
+function handleDebugHotkey(e){
+  if (!e || e.repeat) return;
+  const key = String(e.key || '').toLowerCase();
+  if (key === 'g'){
+    godMode = !godMode;
+    if (godMode && world.player && !world.player.dead){
+      const maxHp = Math.max(1, world.player.maxHp ?? 1);
+      world.player.hp = maxHp;
+      world.player.lastHp = maxHp;
+      world.player.damageBucket = 0;
+    }
+    syncGodModeUI();
+    e.preventDefault();
+    return;
+  }
+  if (key === 'l'){
+    cycleWeapon('left');
+    e.preventDefault();
+    return;
+  }
+  if (key === 'r'){
+    cycleWeapon('right');
+    e.preventDefault();
+    return;
+  }
+  if (key === 'u'){
+    applyCosmeticUpgrade();
+    e.preventDefault();
+  }
 }
 
 function evaluateRun(){
@@ -121,8 +176,14 @@ function startRAF(){
     const boss = Bosses.getStatus?.();
     if (bossPhase === 'fight' && boss) HUD.setBossBar?.(boss.hp, boss.maxHp);
     else HUD.setBossBar?.(0, 1);
+    if (godMode && player && !player.dead){
+      const maxHp = Math.max(1, player.maxHp ?? 1);
+      player.hp = maxHp;
+      player.lastHp = maxHp;
+      player.damageBucket = 0;
+    }
     player.update(dt);
-    if (!player.dead && player.hp <= 0){
+    if (!godMode && !player.dead && player.hp <= 0){
       player.destroy();
     }
     Projectiles.update(dt);
@@ -139,7 +200,7 @@ function startRAF(){
     }
 
     // fall check
-    if (!player.dead && !world.bossActive && !Tiles.isCleared?.() && !Tiles.isSafe(player.x, player.y)){
+    if (!godMode && !player.dead && !world.bossActive && !Tiles.isCleared?.() && !Tiles.isSafe(player.x, player.y)){
       gameOver('You fell!');
       return;
     }
@@ -218,6 +279,8 @@ export function gameOver(msg){
 export function wireUI(){
   HUD.init();
   SFX.warmup?.();
+  syncGodModeUI();
+  window.addEventListener('keydown', handleDebugHotkey);
   window.addEventListener('contextmenu', (e)=> e.preventDefault());
   const btn = document.getElementById('restart');
   if (btn){
@@ -230,6 +293,18 @@ export function wireUI(){
   const again = document.getElementById('playAgain');
   if (again){
     again.addEventListener('click', (e)=>{ e.preventDefault(); startGame(); });
+  }
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle){
+    const syncSoundLabel = () => {
+      soundToggle.textContent = `Sound: ${SFX.isMuted?.() ? 'Off' : 'On'}`;
+    };
+    syncSoundLabel();
+    soundToggle.addEventListener('click', (e)=>{
+      e.preventDefault();
+      SFX.toggleMuted?.();
+      syncSoundLabel();
+    });
   }
   const cvs = document.getElementById('game');
   if (cvs){
