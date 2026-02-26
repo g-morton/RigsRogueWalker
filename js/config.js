@@ -22,7 +22,7 @@ export const CONFIG = {
     H: 200,           // row height
     GAP_MIN: 50,    // min gap between two corridors horizontally
     GAP_MAX: 200,    // max gap
-    PATH_W_MIN: 300, // min corridor width
+    PATH_W_MIN: 100, // min corridor width
     PATH_W_MAX: 800, // max corridor width
     START_SAFE_ROWS: 3  // rows with full-width safe start
   },
@@ -45,7 +45,7 @@ export const CONFIG = {
   },
   WEAPONS: {
     rifle:   { cooldown: 0.50, muzzle:{x:6, y:-12} },
-    longrifle: { cooldown: 0.90, muzzle:{x:8, y:-16} },
+    longrifle: { cooldown: 0.70, muzzle:{x:8, y:-16} },
     shotgun: { cooldown: 1.50, muzzle:{x:8, y:-6}, pellets: 7, spreadDeg: 3 },
     heavyshotgun: { cooldown: 1.85, muzzle:{x:10, y:-4}, pellets: 3, spreadDeg: 4 },
     beamer:  { cooldown: 1.50, muzzle:{x:6, y:-12} },
@@ -66,11 +66,11 @@ export const CONFIG = {
   },
   PROJECTILES: {
     rifle:    { speed: 950, life: 3, r: 3, damage: 8 },
-    longrifle:{ speed: 1100, life: 3.2, r: 4, damage: 15 },
+    longrifle:{ speed: 1200, life: 3.2, r: 4, damage: 15 },
     shotgun:  { speed: 950, life: 3, r: 3, damage: 5 },
     heavyshotgun:{ speed: 860, life: 2.8, r: 5, damage: 15 },
     beamer:   {
-      range: 980, life: 0.50, damage: 30, jitter: 22, arcs: 5,
+      range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 5,
       coreRadius: 7, lightningRadius: 20,
       nearFrac: 0.25, farDamageMul: 0.10,
       closeBoostFrac: 0.25, closeBoostMul: 2.8

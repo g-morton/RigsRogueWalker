@@ -10,6 +10,7 @@ let elScoreBest = null;
 let elDistNow = null;
 let elLevelNow = null;
 let elPlayerHpFill = null;
+let elPlayerHpValue = null;
 let elRestart = null;
 let elGameOver = null;
 let elGoTitle = null;
@@ -60,6 +61,7 @@ export const HUD = {
     elDistNow = document.getElementById('distNow');
     elLevelNow = document.getElementById('levelNow');
     elPlayerHpFill = document.getElementById('playerHpFill');
+    elPlayerHpValue = document.getElementById('playerHpValue');
     elRestart = document.getElementById('restart');
     elGameOver = document.getElementById('gameOver');
     elGoTitle = document.getElementById('gameOverTitle');
@@ -183,8 +185,10 @@ export const HUD = {
         elPlayerHpFill.style.width = `${(ratio * 100).toFixed(1)}%`;
         lastPlayerBarRatio = ratio;
       }
+      if (elPlayerHpValue) elPlayerHpValue.textContent = `HP ${Math.round(cur)}/${Math.round(max)}`;
     } else {
       if (elPlayerHpFill) elPlayerHpFill.style.width = '100%';
+      if (elPlayerHpValue) elPlayerHpValue.textContent = 'HP 0/0';
       lastPlayerBarRatio = -1;
     }
   }
