@@ -44,29 +44,29 @@ export const CONFIG = {
     SQUASH_R: 18
   },
   WEAPONS: {
-    rifle:   { cooldown: 0.18, muzzle:{x:6, y:-12} },
-    shotgun: { cooldown: 0.56, muzzle:{x:8, y:-6}, pellets: 3, spreadDeg: 8 },
+    rifle:   { cooldown: 0.20, muzzle:{x:6, y:-12} },
+    shotgun: { cooldown: 0.60, muzzle:{x:8, y:-6}, pellets: 3, spreadDeg: 8 },
     beamer:  { cooldown: 1.35, muzzle:{x:6, y:-12} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},
       windup: 0.85,
-      heatPerSec: 0.35,
-      coolPerSec: 0.25
+      heatPerSec: 0.20,
+      coolPerSec: 0.10
     },
     cannon:  { cooldown: 0.50, muzzle:{x:18,y:-2}  },
-    rocket:  { cooldown: 0.90, muzzle:{x:0, y:-18} }
+    rocket:  { cooldown: 0.95, muzzle:{x:0, y:-18} }
   },
   PROJECTILES: {
-    rifle:    { speed: 450, life: 3, r: 3, damage: 10 },
-    shotgun:  { speed: 900, life: 3, r: 6, damage: 10 },
+    rifle:    { speed: 550, life: 3, r: 3, damage: 10 },
+    shotgun:  { speed: 900, life: 3, r: 4, damage: 10 },
     beamer:   {
-      range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 9,
-      coreRadius: 7, lightningRadius: 34,
+      range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 5,
+      coreRadius: 7, lightningRadius: 20,
       nearFrac: 0.25, farDamageMul: 0.15,
       closeBoostFrac: 0.16, closeBoostMul: 2.8
     },
-    chaingun: { speed: 550, life: 2, len: 18, w: 3, damage: 6 },
-    cannon:   { speed: 400, life: 2.0, r: 5, damage: 50 },
+    chaingun: { speed: 600, life: 2, len: 12, w: 3, damage: 6 },
+    cannon:   { speed: 450, life: 2.0, r: 5, damage: 50 },
     rocket: {
       speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6, damage: 60,
       ramp_sec: 0.6, accel_base: 0.2, accel_peak: 3.0,
@@ -82,10 +82,10 @@ export const CONFIG = {
     HP: 1,
     SPEED_MIN: 0.1,
     SPEED_MAX: 1.6,
-    TALK_CHANCE: 0.05,
-    TALK_TIME: 1.2,
-    TALK_DENSITY: 0.12,       // NEW: per-second chance an IBS starts talking mid-run
-    TALK_COOLDOWN: 3.0,       // NEW: minimum seconds between lines for the same IBS
+    TALK_CHANCE: 0.03,
+    TALK_TIME: 1.4,
+    TALK_DENSITY: 0.08,       // NEW: per-second chance an IBS starts talking mid-run
+    TALK_COOLDOWN: 3.5,       // NEW: minimum seconds between lines for the same IBS
 
     ANIM: {
         WALK_FREQ: 8.0,     // base step frequency (higher = faster swing)
@@ -99,40 +99,40 @@ export const CONFIG = {
       BULLET_LIFE: 8,
       TYPES: {
         small: {
-          size: 13,
+          size: 15,
           hp: 35,
-          fireCooldownMin: 0.9,
+          fireCooldownMin: 0.8,
           fireCooldownMax: 1.5,
           bulletSpeed: 180,
           bulletDamage: 7,
-          bulletR: 3.2,
+          bulletR: 3,
           weight: 0.45
         },
         medium: {
-          size: 18,
+          size: 22,
           hp: 70,
-          fireCooldownMin: 1.5,
+          fireCooldownMin: 1.2,
           fireCooldownMax: 2.4,
-          bulletSpeed: 175,
-          bulletDamage: 14,
-          bulletR: 4.5,
+          bulletSpeed: 170,
+          bulletDamage: 15,
+          bulletR: 4.0,
           weight: 0.35
         },
         large: {
-          size: 26,
+          size: 30,
           hp: 130,
-          fireCooldownMin: 1.4,
+          fireCooldownMin: 1.8,
           fireCooldownMax: 2.1,
-          bulletSpeed: 105,
-          bulletDamage: 28,
-          bulletR: 6.2,
+          bulletSpeed: 120,
+          bulletDamage: 30,
+          bulletR: 6.0,
           weight: 0.20
         }
       }
     }
   },
   BOSS: {
-    INTERVAL_DIST: 2000,
+    INTERVAL_DIST: 4000,
     ARENA_ROWS: 7,
     // Boss encounter configuration:
     // - `ENCOUNTER_DEFAULT` is used when no rule in ENCOUNTERS matches the level.
@@ -177,17 +177,17 @@ export const CONFIG = {
       // Examples:
       // `type:'turret'` uses one turret boss (supports `turretType`).
       // `type:'pack'` uses `members` with per-member overrides.
-      { minLevel: 1, maxLevel: 1, type: 'turret', turretType: 'large', hpMul: 1.2, sizeMul: 1.4, damageMul: 1.0, fireRateMul: 1.0 },
+      { minLevel: 1, maxLevel: 1, type: 'turret', turretType: 'large', hpMul: 1.5, sizeMul: 1.4, damageMul: 1.5, fireRateMul: 1.5 },
       {
         minLevel: 2, maxLevel: 2, type: 'pack',
         members: [
-          { turretType: 'large', xFrac: 0.50, hpMul: 1.25, sizeMul: 1.45 },
-          { turretType: 'small', xFrac: 0.30, hpMul: 1.0, fireRateMul: 1.45, damageMul: 0.75 },
-          { turretType: 'small', xFrac: 0.70, hpMul: 1.0, fireRateMul: 1.45, damageMul: 0.75 }
+          { turretType: 'large', xFrac: 0.50, hpMul: 1.5, sizeMul: 1.5 },
+          { turretType: 'small', xFrac: 0.30, hpMul: 1.3, fireRateMul: 2.0, damageMul: 0.75 },
+          { turretType: 'small', xFrac: 0.70, hpMul: 1.3, fireRateMul: 2.0, damageMul: 0.75 }
         ]
       },
-      { minLevel: 3, maxLevel: 5, type: 'float', hpMul: 1.0, fireRateMul: 1.0, damageMul: 1.0, mountMul: 1.0 },
-      { minLevel: 6, type: 'float', hpMul: 1.18, fireRateMul: 1.12, damageMul: 1.12, mountMul: 1.15, largeMountBonus: 0.12, hoverSpeedMul: 1.08 }
+      { minLevel: 3, maxLevel: 5, type: 'float', hpMul: 1.5, fireRateMul: 1.2, damageMul: 1.5, mountMul: 1.5 },
+      { minLevel: 6, type: 'float', hpMul: 2.0, fireRateMul: 1.3, damageMul: 1.5, mountMul: 1.5, largeMountBonus: 0.25, hoverSpeedMul: 1.10 }
     ],
     TURRET: {
       STOP_Y_FRAC: 0.24,
@@ -227,8 +227,8 @@ export const CONFIG = {
     MINOR_WALKER_FACTOR: 1.08
   },
   SFX: {
-    IBS_SPLAT_COUNT: 9,
-    ENEMY_EXPLODE_COUNT: 8,
+    IBS_SPLAT_COUNT: 13,
+    ENEMY_EXPLODE_COUNT: 10,
     HIT_SMALL_COUNT: 4,
     HIT_BIG_COUNT: 4
   }

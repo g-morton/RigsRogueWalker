@@ -769,15 +769,21 @@ function drawRigProtrusion(g, m){
   g.fillStyle = INK;
   g.strokeStyle = BG;
   if (m.kind === 'mast_orb'){
-    g.lineWidth = 1.05;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
     g.beginPath();
     g.moveTo(-0.2 * size, -0.1 * size);
-    g.lineTo(7.3 * size, -0.1 * size);
-    g.moveTo(1.5 * size, -1.9 * size);
-    g.lineTo(6.4 * size, -1.9 * size);
+    g.lineTo(14.6 * size, -0.1 * size);
+    g.moveTo(2.8 * size, -1.9 * size);
+    g.lineTo(12.8 * size, -1.9 * size);
+    g.lineWidth = 3.2;
     g.stroke();
+    g.strokeStyle = INK;
+    g.lineWidth = 1.9;
+    g.stroke();
+    g.strokeStyle = BG;
     g.beginPath();
-    g.arc(8.7 * size, 0, 1.15 + size * 0.36, 0, Math.PI * 2);
+    g.arc(17.4 * size, 0, 1.15 + size * 0.36, 0, Math.PI * 2);
     g.fill();
     g.lineWidth = 0.9;
     g.stroke();
@@ -786,6 +792,8 @@ function drawRigProtrusion(g, m){
     g.fillRect(-w * 0.5, -h * 0.5, w, h * 0.34);
     g.fillRect(-w * 0.5, -h * 0.5, w * 0.21, h);
     g.fillRect(w * 0.29, -h * 0.5, w * 0.21, h);
+    g.lineWidth = 0.95;
+    g.strokeRect(-w * 0.5, -h * 0.5, w, h);
   } else if (m.kind === 'orbital_pod'){
     g.beginPath();
     g.arc(1.6 * size, -0.45 * size, 2.65 * size, 0, Math.PI * 2);
@@ -799,6 +807,8 @@ function drawRigProtrusion(g, m){
   } else if (m.kind === 'l_bracket'){
     g.fillRect(-0.75 * size, -3.1 * size, 1.8 * size, 7.6 * size);
     g.fillRect(-1.9 * size, 2.45 * size, 3.0 * size, 1.9 * size);
+    g.lineWidth = 0.95;
+    g.strokeRect(-1.9 * size, -3.1 * size, 3.0 * size, 7.45 * size);
   } else if (m.kind === 'ribbed_pack'){
     const w = 4.9 * size, h = 8.9 * size;
     g.fillRect(-w * 0.5, -h * 0.5, w, h);
@@ -806,6 +816,8 @@ function drawRigProtrusion(g, m){
     g.fillRect(w * 0.50, -h * 0.24, 1.25 * size, 1.8 * size);
     g.fillRect(-w * 0.76, h * 0.06, 1.25 * size, 1.8 * size);
     g.fillRect(w * 0.50, h * 0.06, 1.25 * size, 1.8 * size);
+    g.lineWidth = 0.9;
+    g.strokeRect(-w * 0.76, -h * 0.5, w + (w * 0.52), h);
   } else if (m.kind === 'capsule_cell'){
     const w = 3.6 * size, h = 8.3 * size;
     g.fillRect(-w * 0.5, -h * 0.36, w, h * 0.72);
@@ -850,6 +862,8 @@ function drawRigProtrusion(g, m){
     g.lineTo(w * 0.5, h * 0.29);
     g.closePath();
     g.fill();
+    g.lineWidth = 0.9;
+    g.stroke();
   }
   g.restore();
 }
@@ -867,14 +881,14 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       g.fillRect(0, 4, 10, 10);
       break;
     case 'shotgun':
-      g.fillRect(-2, -24, 14, 22);  // shorter top column
-      g.fillRect(-13, -2, 26, 15);  // side cross block
-      g.fillRect(0, 13, 10, 18);    // compact lower body
-      g.beginPath();                // tapered muzzle/foot
-      g.moveTo(-3, 35);
-      g.lineTo(13, 35);
-      g.lineTo(10, 47);
-      g.lineTo(0, 47);
+      g.fillRect(-14, -14, 30, 30); // near-square main body
+      g.fillRect(-6, -24, 14, 10);  // short top block
+      g.fillRect(-4, 16, 10, 10);   // compact lower block
+      g.beginPath();                 // short tapered muzzle/foot
+      g.moveTo(-5, 30);
+      g.lineTo(11, 30);
+      g.lineTo(8, 39);
+      g.lineTo(-2, 39);
       g.closePath();
       g.fill();
       break;

@@ -147,8 +147,14 @@ export class Player{
 
   addMediumRigMark(){
     const marks = this.rigMarks || (this.rigMarks = []);
-    const protrusionCount = marks.reduce((n, e)=> n + (e?.group === 'protrusion' ? 1 : 0), 0);
-    const side = (protrusionCount % 2 === 0) ? -1 : 1;
+    const protrusions = marks.filter((e) => e?.group === 'protrusion');
+    const classifyPlacement = (e) => {
+      if (e?.placement === 'forward' || e?.placement === 'rear') return e.placement;
+      // Backward compatibility for older marks without explicit placement metadata.
+      return (e?.oy ?? 0) <= 6 ? 'forward' : 'rear';
+    };
+    const rearCount = protrusions.reduce((n, e)=> n + (classifyPlacement(e) === 'rear' ? 1 : 0), 0);
+    const forwardCount = protrusions.length - rearCount;
     const weightedPick = (entries)=>{
       let total = 0;
       for (const e of entries) total += Math.max(0, e.w ?? 1);
@@ -174,28 +180,31 @@ export class Player{
     const pool = chooseForward ? forwardKinds : rearKinds;
     const pk = weightedPick(pool);
     const isForward = chooseForward;
+    const streamCount = isForward ? forwardCount : rearCount;
+    const side = (streamCount % 2 === 0) ? -1 : 1;
 
     // Expanding rear lattice: as upgrades accumulate, sockets grow farther back and wider out.
-    const pairIdx = (protrusionCount / 2) | 0;      // left/right pair index
+    const pairIdx = (rearCount / 2) | 0;            // left/right pair index (rear-only)
     const depth = (pairIdx / 3) | 0;                // every 3 pairs pushes to a deeper "ring"
     const lane = pairIdx % 3;                       // 0..2 side lanes per ring
-    const laneBase = 5.2 + lane * 2.4;              // start wider from body centerline
-    const spreadGrow = depth * 1.25;                // widen with depth
-    const rearY = 13.0 + pairIdx * 1.65 + depth * 1.15; // start outside torso, then keep extending rearward
+    const laneBase = 7.8 + lane * 3.6;              // start wider from body centerline
+    const spreadGrow = depth * 2.5;                 // widen with depth
+    const rearY = 18.0 + pairIdx * 3.4 + depth * 2.8; // push stacking farther rearward
 
-    const ox = side * (isForward ? (4 + Math.random() * 8) : (laneBase + spreadGrow + Math.random() * 0.85));
+    const ox = side * (isForward ? (5 + Math.random() * 10) : (laneBase + spreadGrow + Math.random() * 1.4));
     const oy = isForward
-      ? (-8 + Math.random() * 10)        // front half for mast/antenna styles
-      : (rearY + (Math.random() * 1.0 - 0.5)); // progressively farther rear with slight jitter
+      ? (-9 + Math.random() * 12)        // front half for mast/antenna styles
+      : (rearY + (Math.random() * 1.6 - 0.8)); // progressively farther rear with slight jitter
     const rot = isForward ? (-Math.PI * 0.5) : (Math.PI * 0.5);
     marks.push({
       group: 'protrusion',
+      placement: isForward ? 'forward' : 'rear',
       kind: pk,
       side,
       ox,
       oy,
       rot,
-      size: isForward ? (1.05 + Math.random() * 0.85) : (1.28 + Math.random() * 0.95)
+      size: (isForward ? (1.05 + Math.random() * 0.85) : (1.28 + Math.random() * 0.95)) * 2
     });
 
     const maxMarks = 36;
