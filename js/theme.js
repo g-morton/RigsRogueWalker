@@ -124,8 +124,9 @@ export const Theme = {
     // Muzzle marker: projectile origin.
     g.beginPath();
     g.arc(0, 0, Math.max(2.5, size * 0.22), 0, Math.PI * 2);
-    g.fillStyle = BG;
-    g.fill();
+    g.lineWidth = Math.max(1.4, size * 0.12);
+    g.strokeStyle = BG;
+    g.stroke();
     g.restore();
   },
 
@@ -881,14 +882,14 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       g.fillRect(0, 4, 10, 10);
       break;
     case 'shotgun':
-      g.fillRect(-14, -14, 30, 30); // near-square main body
-      g.fillRect(-6, -24, 14, 10);  // short top block
-      g.fillRect(-4, 16, 10, 10);   // compact lower block
+      g.fillRect(0, -14, 22, 18); // near-square main body
+      g.fillRect(3, -24, 10, 10);  // short top block
+      g.fillRect(0, 0, 16, 20);   // compact lower block
       g.beginPath();                 // short tapered muzzle/foot
-      g.moveTo(-5, 30);
-      g.lineTo(11, 30);
-      g.lineTo(8, 39);
-      g.lineTo(-2, 39);
+      g.moveTo(0, 24);
+      g.lineTo(16, 24);
+      g.lineTo(12, 30);
+      g.lineTo(4, 30);
       g.closePath();
       g.fill();
       break;

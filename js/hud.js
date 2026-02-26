@@ -7,6 +7,8 @@ const BEST_SCORE_KEY = 'rrw_best_score_v1';
 
 let elScoreNow = null;
 let elScoreBest = null;
+let elDistNow = null;
+let elLevelNow = null;
 let elPlayerHpFill = null;
 let elRestart = null;
 let elGameOver = null;
@@ -24,6 +26,8 @@ let bossBannerTimer = null;
 
 let lastPlayerBarRatio = -1;
 let lastScoreNow = -1;
+let lastDistNow = -1;
+let lastLevelNow = -1;
 let bestScore = 0;
 
 function computeScore(){
@@ -53,6 +57,8 @@ export const HUD = {
   init(){
     elScoreNow = document.getElementById('scoreNow');
     elScoreBest = document.getElementById('scoreBest');
+    elDistNow = document.getElementById('distNow');
+    elLevelNow = document.getElementById('levelNow');
     elPlayerHpFill = document.getElementById('playerHpFill');
     elRestart = document.getElementById('restart');
     elGameOver = document.getElementById('gameOver');
@@ -67,6 +73,8 @@ export const HUD = {
     elBossBanner = document.getElementById('bossBanner');
     elPowerKey = document.getElementById('powerKey');
     lastScoreNow = -1;
+    lastDistNow = -1;
+    lastLevelNow = -1;
     bestScore = loadBestScore();
     if (elScoreBest) elScoreBest.textContent = String(bestScore);
     lastPlayerBarRatio = -1;
@@ -154,6 +162,16 @@ export const HUD = {
       bestScore = score;
       saveBestScore(bestScore);
       if (elScoreBest) elScoreBest.textContent = String(bestScore);
+    }
+    const dist = (world.dist | 0);
+    if (elDistNow && dist !== lastDistNow){
+      elDistNow.textContent = String(dist);
+      lastDistNow = dist;
+    }
+    const level = Math.max(1, world.level | 0);
+    if (elLevelNow && level !== lastLevelNow){
+      elLevelNow.textContent = String(level);
+      lastLevelNow = level;
     }
 
     const p = world.player;

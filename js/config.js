@@ -36,7 +36,7 @@ export const CONFIG = {
     HEAD_OFFSET_Y: -18,
     BASE_STEP: 1.0, LEG_SPEED: 0.7, HEAD_BOB_SPEED: 0.5,
     MOUNT_OFFSET_X: 30, MOUNT_OFFSET_Y: 4,
-    MOVE_PX_PER_SEC: 100,
+    MOVE_PX_PER_SEC: 80,
     TWIST_DEG: 50,
     TWIST_DEG_CANVAS: 115,
     TWIST_LERP: 0.15,
@@ -44,33 +44,33 @@ export const CONFIG = {
     SQUASH_R: 18
   },
   WEAPONS: {
-    rifle:   { cooldown: 0.20, muzzle:{x:6, y:-12} },
-    shotgun: { cooldown: 0.60, muzzle:{x:8, y:-6}, pellets: 3, spreadDeg: 8 },
-    beamer:  { cooldown: 1.35, muzzle:{x:6, y:-12} },
+    rifle:   { cooldown: 0.50, muzzle:{x:6, y:-12} },
+    shotgun: { cooldown: 1.50, muzzle:{x:8, y:-6}, pellets: 5, spreadDeg: 3 },
+    beamer:  { cooldown: 1.50, muzzle:{x:6, y:-12} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},
-      windup: 0.85,
+      windup: 0.80,
       heatPerSec: 0.20,
       coolPerSec: 0.10
     },
-    cannon:  { cooldown: 0.50, muzzle:{x:18,y:-2}  },
-    rocket:  { cooldown: 0.95, muzzle:{x:0, y:-18} }
+    cannon:  { cooldown: 2.00, muzzle:{x:18,y:-2}  },
+    rocket:  { cooldown: 1.50, muzzle:{x:0, y:-18} }
   },
   PROJECTILES: {
-    rifle:    { speed: 550, life: 3, r: 3, damage: 10 },
-    shotgun:  { speed: 900, life: 3, r: 4, damage: 10 },
+    rifle:    { speed: 950, life: 3, r: 3, damage: 8 },
+    shotgun:  { speed: 950, life: 3, r: 3, damage: 5 },
     beamer:   {
-      range: 980, life: 0.50, damage: 40, jitter: 22, arcs: 5,
+      range: 980, life: 0.50, damage: 30, jitter: 22, arcs: 5,
       coreRadius: 7, lightningRadius: 20,
-      nearFrac: 0.25, farDamageMul: 0.15,
-      closeBoostFrac: 0.16, closeBoostMul: 2.8
+      nearFrac: 0.25, farDamageMul: 0.10,
+      closeBoostFrac: 0.25, closeBoostMul: 2.8
     },
     chaingun: { speed: 600, life: 2, len: 12, w: 3, damage: 6 },
-    cannon:   { speed: 450, life: 2.0, r: 5, damage: 50 },
+    cannon:   { speed: 900, life: 2.0, r: 5, damage: 70 },
     rocket: {
-      speed: 220, life: 2.6, accel: 800, vmax: 1000, len: 16, w: 6, damage: 60,
+      speed: 200, life: 2.6, accel: 950, vmax: 1000, len: 16, w: 6, damage: 50,
       ramp_sec: 0.6, accel_base: 0.2, accel_peak: 3.0,
-      trail_dt: 0.03, trail_len: 12, puff_r0: 2.0, puff_growth: 22, puff_fade: 1.6
+      trail_dt: 0.03, trail_len: 12, puff_r0: 2.0, puff_growth: 24, puff_fade: 1.8
     }
   },
     IBS: {
@@ -222,9 +222,9 @@ export const CONFIG = {
     }
   },
   POWERUPS: {
-    RADIUS: 20,
-    MINOR_REPAIR_HEAL_FRAC: 0.15,
-    MINOR_WALKER_FACTOR: 1.08
+    RADIUS: 30,
+    MINOR_REPAIR_HEAL_FRAC: 0.10,
+    MINOR_WALKER_FACTOR: 1.00
   },
   SFX: {
     IBS_SPLAT_COUNT: 13,

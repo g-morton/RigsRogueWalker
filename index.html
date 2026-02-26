@@ -25,13 +25,13 @@
     }
 
     #topUi {
-      height: 52px;
-      flex: 0 0 52px;
+      height: 68px;
+      flex: 0 0 68px;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 8px;
-      padding: 5px 8px 6px;
+      padding: 6px 8px 7px;
       box-sizing: border-box;
       background: #111;
       color: #fff;
@@ -58,10 +58,16 @@
     }
 
     #playerStats {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      line-height: 1;
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      column-gap: 12px;
+      row-gap: 3px;
+      line-height: 1.1;
+    }
+
+    .playerStat {
+      display: inline-flex;
+      align-items: baseline;
     }
 
     .hudLabel {
@@ -81,7 +87,7 @@
 
     .hudValue.fixed {
       display: inline-block;
-      width: 78px;
+      width: 68px;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
@@ -106,8 +112,12 @@
     #controls {
       position: static;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      align-content: flex-start;
+      justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 6px;
+      max-width: 46%;
     }
 
     #controls a {
@@ -274,8 +284,10 @@
       <div id="hud">
         <div id="playerHudCompact">
           <div id="playerStats">
-            <span><span class="hudLabel">Score</span><span class="hudValue fixed" id="scoreNow">0</span></span>
-            <span><span class="hudLabel">Best</span><span class="hudValue fixed" id="scoreBest">0</span></span>
+            <span class="playerStat"><span class="hudLabel">Score</span><span class="hudValue fixed" id="scoreNow">0</span></span>
+            <span class="playerStat"><span class="hudLabel">Best</span><span class="hudValue fixed" id="scoreBest">0</span></span>
+            <span class="playerStat"><span class="hudLabel">Dist</span><span class="hudValue fixed" id="distNow">0</span></span>
+            <span class="playerStat"><span class="hudLabel">Level</span><span class="hudValue fixed" id="levelNow">1</span></span>
           </div>
           <div id="playerHpWrap"><div id="playerHpFill"></div></div>
         </div>

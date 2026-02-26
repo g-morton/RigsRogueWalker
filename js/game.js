@@ -137,6 +137,7 @@ function maybeAdvanceBossSequence(){
   if (Bosses.hasActiveBoss?.()) return;
   const interval = Math.max(1, CONFIG.BOSS?.INTERVAL_DIST ?? 5000);
   world.bossActive = false;
+  world.level = Math.max(1, (world.level | 0) + 1);
   world.spawnLocked = false;
   world.spawnScale = 0;
   bossPhase = 'none';
@@ -215,7 +216,7 @@ function startRAF(){
 export function startGame(){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  world.running = false; world.dist = 0; world.dy = 0; world.ibsHit = 0; world.enemyDestroyed = 0; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
+  world.running = false; world.dist = 0; world.dy = 0; world.ibsHit = 0; world.enemyDestroyed = 0; world.level = 1; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Bosses.reset?.(); Particles.reset?.();
@@ -235,7 +236,7 @@ export function startGame(){
 export function boot(){
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  world.running = false; world.dist = 0; world.dy = 0; world.enemyDestroyed = 0; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
+  world.running = false; world.dist = 0; world.dy = 0; world.enemyDestroyed = 0; world.level = 1; world.bossActive = false; world.nextBossDist = (CONFIG.BOSS?.INTERVAL_DIST ?? 5000); world.spawnLocked = false; world.spawnScale = 1; bossPhase = 'none'; lastT = 0;
 
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Bosses.reset?.(); Particles.reset?.();
