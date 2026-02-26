@@ -30,9 +30,12 @@ const PICKUP_FILES = Array.from({ length: PICKUP_COUNT }, (_, i) => `./assets/so
 
 const SHOT_BY_WEAPON = {
   rifle: 'small',
+  longrifle: 'small',
   shotgun: 'shotgun',
+  heavyshotgun: 'shotgun',
   beamer: 'beam',
   chaingun: 'chaingun',
+  chaincannon: 'chaingun',
   cannon: 'big',
   rocket: 'rocket'
 };

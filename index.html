@@ -208,6 +208,53 @@
     #splashTitle { margin: 0 0 10px; font-size: 34px; line-height: 1.1; }
     #splashBody { font-size: 15px; line-height: 1.5; margin-bottom: 16px; }
 
+    #chassisPicker {
+      margin-top: 12px;
+      border: 2px solid #000;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #f3f3f3;
+    }
+
+    #chassisTitle {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    #chassisOptions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .chassisOption {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 8px;
+      border: 1px solid #000;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .chassisOption input { margin-top: 2px; }
+
+    .chassisOption strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .chassisOption span {
+      display: block;
+      font-size: 12px;
+      opacity: 0.8;
+      line-height: 1.25;
+    }
+
     #splashPlay {
       display: inline-block;
       padding: 10px 14px;
@@ -317,6 +364,27 @@
         <strong>Controls:</strong> Use WSAD or cursor keys to move, and mouse to target and left/right buttons to shoot.<br>
         <strong>Power-ups:</strong> Destroy enemies to reveal upgrades and new weapons:<br>
         'D' Damage, 'F' Projectile speed, 'R' Fire rate, 'M' Move speed, HP Repair, L-* Left weapon mount, R-* Right weapon mount.<br>
+        <div id="chassisPicker">
+          <div id="chassisTitle">Starting Chassis</div>
+          <div id="chassisOptions">
+            <label class="chassisOption">
+              <input type="radio" name="chassis" value="amass">
+              <div><strong>Amass Rig</strong><span>Slow, high HP. Starts with Cannon + Rifle.</span></div>
+            </label>
+            <label class="chassisOption">
+              <input type="radio" name="chassis" value="windward" checked>
+              <div><strong>Windward Rig</strong><span>Medium speed/HP. Starts with Rocket + Rifle.</span></div>
+            </label>
+            <label class="chassisOption">
+              <input type="radio" name="chassis" value="talon">
+              <div><strong>Talon Rig</strong><span>Medium speed, high HP. Starts with Shotgun + Rifle.</span></div>
+            </label>
+            <label class="chassisOption">
+              <input type="radio" name="chassis" value="estelle">
+              <div><strong>Estelle Rig</strong><span>Fast, low HP. Starts with Beamer.</span></div>
+            </label>
+          </div>
+        </div>
       </div>
       <a href="#" id="splashPlay">Play</a>
     </div>

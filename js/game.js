@@ -19,12 +19,58 @@ let loopSeq = 0;
 let bossPhase = 'none'; // none | clearing | approach | fight
 let godMode = false;
 
-const DEBUG_WEAPON_ORDER = ['rifle', 'shotgun', 'chaingun', 'beamer', 'rocket', 'cannon'];
+const DEBUG_WEAPON_ORDER = ['rifle', 'longrifle', 'shotgun', 'heavyshotgun', 'chaingun', 'chaincannon', 'beamer', 'rocket', 'cannon'];
+const CHASSIS_PRESETS = {
+  amass: {
+    hp: 180,
+    speedMul: 0.78,
+    weapons: { left: 'cannon', right: 'rifle' },
+    allowedWeapons: ['rifle', 'longrifle', 'cannon', 'chaingun', 'chaincannon'],
+    allowedMounts: ['left', 'right']
+  },
+  windward: {
+    hp: 120,
+    speedMul: 1.0,
+    weapons: { left: 'rocket', right: 'rifle' },
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'rocket'],
+    allowedMounts: ['left', 'right']
+  },
+  talon: {
+    hp: 150,
+    speedMul: 0.94,
+    weapons: { left: 'shotgun', right: 'rifle' },
+    allowedWeapons: ['rifle', 'longrifle', 'shotgun', 'heavyshotgun'],
+    allowedMounts: ['left', 'right']
+  },
+  estelle: {
+    hp: 72,
+    speedMul: 1.32,
+    weapons: { left: 'beamer', right: null },
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'shotgun'],
+    allowedMounts: ['left']
+  }
+};
+let selectedChassis = 'windward';
 
 function syncGodModeUI(){
   const tag = document.getElementById('godModeTag');
   if (!tag) return;
   tag.style.display = godMode ? 'inline-block' : 'none';
+}
+
+function getSelectedChassisKey(){
+  const picked = document.querySelector('input[name="chassis"]:checked');
+  const key = picked?.value || selectedChassis || 'windward';
+  return CHASSIS_PRESETS[key] ? key : 'windward';
+}
+
+function buildPlayerPreset(){
+  selectedChassis = getSelectedChassisKey();
+  const preset = CHASSIS_PRESETS[selectedChassis] || CHASSIS_PRESETS.windward;
+  world.chassisKey = selectedChassis;
+  world.allowedWeaponDrops = Array.isArray(preset.allowedWeapons) ? [...preset.allowedWeapons] : null;
+  world.allowedWeaponSides = Array.isArray(preset.allowedMounts) ? [...preset.allowedMounts] : null;
+  return preset;
 }
 
 function currentBossLevel(){
@@ -221,9 +267,9 @@ export function startGame(){
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Bosses.reset?.(); Particles.reset?.();
 
-  player = new Player(); world.player = player;
+  player = new Player(buildPlayerPreset()); world.player = player;
 
-  HUD.setRestartLabel('Restart ↻');
+  HUD.setRestartLabel('Menu');
   HUD.hideSplash?.();
   HUD.hideGameOver?.();
   HUD.hideBossUI?.();
@@ -241,7 +287,8 @@ export function boot(){
   Background.reset?.(); Tiles.reset?.(); Tiles.regen?.(); IBS.reset?.();
   Projectiles.reset?.(); Powerups.reset?.(); Turrets.reset?.(); Bosses.reset?.(); Particles.reset?.();
 
-  if (!player){ player = new Player(); world.player = player; }
+  HUD.setRestartLabel('Start >');
+  if (!player){ player = new Player(buildPlayerPreset()); world.player = player; }
   HUD.showSplash?.();
   HUD.hideGameOver?.();
   HUD.hideBossUI?.();
@@ -262,7 +309,7 @@ export function gameOver(msg){
   world.running = false;
   if (rafId){ cancelAnimationFrame(rafId); rafId = null; }
   loopSeq++;
-  HUD.setRestartLabel('Restart ↻');
+  HUD.setRestartLabel('Menu');
   HUD.hideBossUI?.();
   HUD.setPowerKeyVisible?.(true);
   const r = evaluateRun();
@@ -285,12 +332,17 @@ export function wireUI(){
   window.addEventListener('contextmenu', (e)=> e.preventDefault());
   const btn = document.getElementById('restart');
   if (btn){
-    btn.addEventListener('click', (e)=>{ e.preventDefault(); startGame(); });
+    btn.addEventListener('click', (e)=>{ e.preventDefault(); boot(); });
   }
   const splashPlay = document.getElementById('splashPlay');
   if (splashPlay){
     splashPlay.addEventListener('click', (e)=>{ e.preventDefault(); startGame(); });
   }
+  document.querySelectorAll('input[name="chassis"]').forEach((el) => {
+    el.addEventListener('change', () => {
+      selectedChassis = getSelectedChassisKey();
+    });
+  });
   const again = document.getElementById('playAgain');
   if (again){
     again.addEventListener('click', (e)=>{ e.preventDefault(); startGame(); });

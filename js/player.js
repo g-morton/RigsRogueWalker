@@ -8,28 +8,47 @@ import { getMuzzleLocal, getCooldownSec } from './weapons.js';
 
 const MAX_TWIST = CONFIG.PLAYER.TWIST_DEG * Math.PI/180;
 const MAX_TWIST_CANVAS = (CONFIG.PLAYER.TWIST_DEG_CANVAS ?? CONFIG.PLAYER.TWIST_DEG) * Math.PI/180;
-const WEAPON_SIZE = { rifle: 1, shotgun: 2, beamer: 2, chaingun: 2, rocket: 3, cannon: 4 };
+const WEAPON_SIZE = {
+  rifle: 1,
+  longrifle: 2,
+  shotgun: 2,
+  heavyshotgun: 3,
+  beamer: 2,
+  chaingun: 2,
+  chaincannon: 4,
+  rocket: 3,
+  cannon: 4
+};
+const CHAIN_WEAPONS = new Set(['chaingun', 'chaincannon']);
 
 export class Player{
-  constructor(){
+  constructor(opts = {}){
     this.x = world.w * CONFIG.PLAYER.START_X;
     this.y = world.h * CONFIG.PLAYER.START_Y;
     this.t = 0;
     this.angle = 0;
 
-    this.weapons = { left: 'rifle', right: null };
+    const allowedMounts = Array.isArray(opts.allowedMounts) && opts.allowedMounts.length
+      ? opts.allowedMounts
+      : ['left', 'right'];
+    this.allowedMounts = new Set(allowedMounts);
+
+    this.weapons = {
+      left: this.allowedMounts.has('left') ? (opts.weapons?.left ?? 'rifle') : null,
+      right: this.allowedMounts.has('right') ? (opts.weapons?.right ?? null) : null
+    };
     this.cooldown = { left: 0, right: 0 };
     this.chaingun = {
       left:  { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false },
       right: { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false }
     };
 
-    this.speedMul = 1.0;
+    this.speedMul = Math.max(0.5, opts.speedMul ?? 1.0);
     this.reloadMul = 1.0;
     this.projSpeedMul = 1.0;
     this.damageMul = 1.0;
 
-    this.maxHp = CONFIG.PLAYER.HP ?? 120;
+    this.maxHp = Math.max(1, opts.hp ?? CONFIG.PLAYER.HP ?? 120);
     this.hp = this.maxHp;
     this.lastHp = this.hp;
     this.damageBucket = 0;
@@ -129,8 +148,9 @@ export class Player{
 
   setWeapon(side, type){
     if (side !== 'left' && side !== 'right') return;
+    if (!this.allowedMounts?.has(side)) return;
     this.weapons[side] = type || null;
-    if (type !== 'chaingun'){
+    if (!CHAIN_WEAPONS.has(type)){
       const st = this.chaingun[side];
       st.heat = 0; st.windupT = 0; st.spinning = false; st.overheated = false; st.windupPlayed = false;
     }
@@ -215,7 +235,7 @@ export class Player{
     if (this.dead) return;
     const type = this.weapons[side];
     if (!type) return;
-    if (type === 'chaingun') return;
+    if (CHAIN_WEAPONS.has(type)) return;
     if (this.cooldown[side] > 0) return;
     this.shoot(side, type);
   }
@@ -266,15 +286,15 @@ export class Player{
       return;
     }
 
-    if (type === 'shotgun'){
-      const def = CONFIG.WEAPONS.shotgun || {};
+    if (type === 'shotgun' || type === 'heavyshotgun'){
+      const def = CONFIG.WEAPONS[type] || CONFIG.WEAPONS.shotgun || {};
       const pellets = Math.max(3, def.pellets ?? 3);
       const spreadDeg = Math.max(1, def.spreadDeg ?? 8);
       const spreadStep = (spreadDeg * Math.PI / 180);
       const mid = (pellets - 1) * 0.5;
       for (let i = 0; i < pellets; i++){
         const da = (i - mid) * spreadStep;
-        Projectiles.spawn(wx, wy, a + da, 'shotgun', {
+        Projectiles.spawn(wx, wy, a + da, type, {
           speedMul: this.projSpeedMul,
           damageMul: this.damageMul
         });
@@ -288,7 +308,7 @@ export class Player{
       speedMul: this.projSpeedMul,
       damageMul: this.damageMul
     });
-    if (type === 'chaingun'){
+    if (type === 'chaingun' || type === 'chaincannon'){
       const rightX = Math.cos(a);
       const rightY = Math.sin(a);
       const outX = rightX * s;
@@ -325,8 +345,9 @@ export class Player{
 
   updateChaingun(side, holding, dt){
     const st = this.chaingun[side];
-    const isChain = this.weapons[side] === 'chaingun';
-    const def = CONFIG.WEAPONS.chaingun || {};
+    const chainType = this.weapons[side];
+    const isChain = CHAIN_WEAPONS.has(chainType);
+    const def = isChain ? (CONFIG.WEAPONS[chainType] || CONFIG.WEAPONS.chaingun || {}) : (CONFIG.WEAPONS.chaingun || {});
     const windup = Math.max(0.05, def.windup ?? 0.32);
     const heatPerSec = Math.max(0.05, def.heatPerSec ?? 0.64);
     const coolPerSec = Math.max(0.05, def.coolPerSec ?? 0.45);
@@ -370,7 +391,7 @@ export class Player{
       st.spinning = true;
     }
 
-    this.shoot(side, 'chaingun');
+    this.shoot(side, chainType);
     st.heat = Math.min(1, st.heat + heatPerSec * dt);
     if (st.heat >= 1){
       st.overheated = true;

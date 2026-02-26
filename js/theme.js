@@ -71,7 +71,9 @@ export const Theme = {
   drawProjectile(g, s){
     switch(s.type){
       case 'rifle':
+      case 'longrifle':
       case 'shotgun':
+      case 'heavyshotgun':
       case 'cannon': {
         const r = s.r;
         g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI*2);
@@ -79,7 +81,8 @@ export const Theme = {
         g.lineWidth = 2; g.strokeStyle = BG; g.stroke();
         break;
       }
-      case 'chaingun': {
+      case 'chaingun':
+      case 'chaincannon': {
         const v = Math.hypot(s.vx, s.vy) || 1;
         const nx = s.vx / v, ny = s.vy / v;
         const x2 = s.x + nx * s.len, y2 = s.y + ny * s.len;
@@ -904,11 +907,16 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
   g.save(); g.translate(ax, ay); g.scale(s,1);
   const h = Math.max(0, Math.min(1, heat || 0));
   const heatColor = `rgb(${Math.round(224 * h)},0,0)`;
-  g.fillStyle = (type === 'chaingun') ? heatColor : CONFIG.COLORS.INK;
+  g.fillStyle = (type === 'chaingun' || type === 'chaincannon') ? heatColor : CONFIG.COLORS.INK;
   switch(type){
     case 'rifle':
       g.fillRect(-4, -14, 6, 30);
       g.fillRect(0, 4, 10, 10);
+      break;
+    case 'longrifle':
+      g.fillRect(-4, -26, 6, 42);
+      g.fillRect(-1, -31, 4, 5);
+      g.fillRect(0, 6, 11, 9);
       break;
     case 'shotgun':
       g.fillRect(0, -14, 22, 18); // near-square main body
@@ -919,6 +927,18 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       g.lineTo(16, 24);
       g.lineTo(12, 30);
       g.lineTo(4, 30);
+      g.closePath();
+      g.fill();
+      break;
+    case 'heavyshotgun':
+      g.fillRect(-2, -12, 26, 18);
+      g.fillRect(4, -20, 12, 8);
+      g.fillRect(2, 6, 18, 16);
+      g.beginPath();
+      g.moveTo(0, 24);
+      g.lineTo(20, 24);
+      g.lineTo(16, 32);
+      g.lineTo(4, 32);
       g.closePath();
       g.fill();
       break;
@@ -937,6 +957,13 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       g.fillRect(-4, 8, 18, 26);   // lower mass
       g.fillRect(4, 18, 18, 22);    // forward/right block
       g.fillRect(8, 40, 8, 4);    // little foot
+      break;
+    case 'chaincannon':
+      g.fillRect(-3, -35, 14, 40);
+      g.fillRect(1, -40, 6, 6);
+      g.fillRect(-6, 8, 22, 24);
+      g.fillRect(5, 16, 24, 20);
+      g.fillRect(12, 37, 10, 5);
       break;
     case 'cannon':
       g.fillRect(-4, -12, 22, 44); // main mass

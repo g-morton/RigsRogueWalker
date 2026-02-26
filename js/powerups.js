@@ -11,10 +11,16 @@ const R = CONFIG.POWERUPS.RADIUS;
 const SIDE_WEAPON_DROPS = [
   { key:'L-Ri', type:'weapon', side:'left',  weapon:'rifle'    },
   { key:'R-Ri', type:'weapon', side:'right', weapon:'rifle'    },
+  { key:'L-LR', type:'weapon', side:'left',  weapon:'longrifle' },
+  { key:'R-LR', type:'weapon', side:'right', weapon:'longrifle' },
   { key:'L-Sg', type:'weapon', side:'left',  weapon:'shotgun'  },
   { key:'R-Sg', type:'weapon', side:'right', weapon:'shotgun'  },
+  { key:'L-HS', type:'weapon', side:'left',  weapon:'heavyshotgun' },
+  { key:'R-HS', type:'weapon', side:'right', weapon:'heavyshotgun' },
   { key:'L-Ch', type:'weapon', side:'left',  weapon:'chaingun' },
   { key:'R-Ch', type:'weapon', side:'right', weapon:'chaingun' },
+  { key:'L-CC', type:'weapon', side:'left',  weapon:'chaincannon' },
+  { key:'R-CC', type:'weapon', side:'right', weapon:'chaincannon' },
   { key:'L-Be', type:'weapon', side:'left',  weapon:'beamer'   },
   { key:'R-Be', type:'weapon', side:'right', weapon:'beamer'   },
   { key:'L-Ro', type:'weapon', side:'left',  weapon:'rocket'   },
@@ -37,7 +43,15 @@ const MINOR_WALKER_DROPS = [
 ];
 
 function chooseWeaponDrop(){
-  return SIDE_WEAPON_DROPS[(Math.random() * SIDE_WEAPON_DROPS.length) | 0];
+  const allowed = Array.isArray(world.allowedWeaponDrops) ? world.allowedWeaponDrops : null;
+  const allowedSides = Array.isArray(world.allowedWeaponSides) ? world.allowedWeaponSides : null;
+  const pool = SIDE_WEAPON_DROPS.filter((d) => {
+    if (allowed && allowed.length && !allowed.includes(d.weapon)) return false;
+    if (allowedSides && allowedSides.length && !allowedSides.includes(d.side)) return false;
+    return true;
+  });
+  const src = pool.length ? pool : SIDE_WEAPON_DROPS;
+  return src[(Math.random() * src.length) | 0];
 }
 
 function chooseMinorWalkerDrop(){
