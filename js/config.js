@@ -45,7 +45,7 @@ export const CONFIG = {
   },
   WEAPONS: {
     rifle:   { cooldown: 0.50, muzzle:{x:6, y:-12} },
-    shotgun: { cooldown: 1.50, muzzle:{x:8, y:-6}, pellets: 5, spreadDeg: 3 },
+    shotgun: { cooldown: 1.50, muzzle:{x:8, y:-6}, pellets: 7, spreadDeg: 3 },
     beamer:  { cooldown: 1.50, muzzle:{x:6, y:-12} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},

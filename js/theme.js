@@ -724,6 +724,35 @@ drawIBSBubble(g, p, r){
       g.strokeStyle = INK;
       g.strokeRect(-w/2, -h/2, w, h);
       g.restore();
+    } else if (p.type === 'pickupGlow'){
+      const rr = 10 + t * 20;
+      g.beginPath(); g.arc(p.x, p.y, rr, 0, Math.PI*2);
+      g.fillStyle = BG; g.fill();
+      g.beginPath(); g.arc(p.x, p.y, rr * 0.42, 0, Math.PI*2);
+      g.fillStyle = INK; g.fill();
+    } else if (p.type === 'pickupRing'){
+      const t2 = p.t / Math.max(0.001, p.life);
+      const rr = (p.r0 ?? 4) + ((p.r1 ?? 28) - (p.r0 ?? 4)) * t2;
+      g.beginPath(); g.arc(p.x, p.y, rr, 0, Math.PI*2);
+      g.lineWidth = 2.3;
+      g.strokeStyle = BG;
+      g.stroke();
+      g.beginPath(); g.arc(p.x, p.y, Math.max(0, rr - 2), 0, Math.PI*2);
+      g.lineWidth = 1.1;
+      g.strokeStyle = INK;
+      g.stroke();
+    } else if (p.type === 'pickupShard'){
+      g.save();
+      g.translate(p.x, p.y);
+      g.rotate(p.angle || 0);
+      const w = p.w || 4;
+      const h = p.h || 1.8;
+      g.fillStyle = BG;
+      g.fillRect(-w/2, -h/2, w, h);
+      g.lineWidth = 0.9;
+      g.strokeStyle = INK;
+      g.strokeRect(-w/2, -h/2, w, h);
+      g.restore();
     } else if (p.type === 'pickupFlash'){
       const t2 = p.t / Math.max(0.001, p.life);
       const rr = 2 + t2 * 8;

@@ -25,6 +25,8 @@ const ENEMY_EXPLODE_FILES = Array.from(
 
 const IBS_SPLAT_COUNT = Math.max(1, CONFIG.SFX?.IBS_SPLAT_COUNT ?? 4);
 const IBS_SPLAT_FILES = Array.from({ length: IBS_SPLAT_COUNT }, (_, i) => `./assets/sounds/ibs-splat-${i + 1}.wav`);
+const PICKUP_COUNT = Math.max(1, CONFIG.SFX?.PICKUP_COUNT ?? 5);
+const PICKUP_FILES = Array.from({ length: PICKUP_COUNT }, (_, i) => `./assets/sounds/pickup-${i + 1}.wav`);
 
 const SHOT_BY_WEAPON = {
   rifle: 'small',
@@ -132,6 +134,9 @@ export function warmup(){
   for (let i = 0; i < IBS_SPLAT_FILES.length; i++){
     pools.set(`ibs:${i}`, makePool(IBS_SPLAT_FILES[i], 3));
   }
+  for (let i = 0; i < PICKUP_FILES.length; i++){
+    pools.set(`pickup:${i}`, makePool(PICKUP_FILES[i], 4));
+  }
 }
 
 function playHit(amount = 1){
@@ -152,6 +157,12 @@ function playIbsSplat(){
   if (!IBS_SPLAT_FILES.length) return;
   const idx = (Math.random() * IBS_SPLAT_FILES.length) | 0;
   playFromPool(pools.get(`ibs:${idx}`));
+}
+
+function playPickup(){
+  if (!PICKUP_FILES.length) return;
+  const idx = (Math.random() * PICKUP_FILES.length) | 0;
+  playFromPool(pools.get(`pickup:${idx}`));
 }
 
 function ensureWarm(){
@@ -184,5 +195,6 @@ export const SFX = {
   playChaingunWindup,
   playHit,
   playEnemyExplode,
-  playIbsSplat
+  playIbsSplat,
+  playPickup
 };

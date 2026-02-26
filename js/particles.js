@@ -100,6 +100,35 @@ export function spawnShellEject(x, y, vx, vy, opts = {}){
   });
 }
 
+export function spawnPickupBurst(x, y, amount = 1){
+  const intensity = Math.max(0.6, Math.min(2.4, amount));
+
+  // Legacy flash backbone plus stronger pickup-specific visuals.
+  spawnImpact(x, y, 'pickupFlash', 1.25 * intensity);
+
+  pool.push({ type: 'pickupGlow', x, y, vx: 0, vy: 0, t: 0, life: 0.34 + intensity * 0.04 });
+  pool.push({ type: 'pickupRing', x, y, vx: 0, vy: 0, t: 0, life: 0.28 + intensity * 0.05, r0: 4, r1: 22 + intensity * 9 });
+  pool.push({ type: 'pickupRing', x, y, vx: 0, vy: 0, t: 0, life: 0.42 + intensity * 0.06, r0: 2, r1: 34 + intensity * 13 });
+
+  const shardCount = Math.round(12 + intensity * 6);
+  for (let i = 0; i < shardCount; i++){
+    const a = (i / Math.max(1, shardCount)) * Math.PI * 2 + (Math.random() - 0.5) * 0.18;
+    const s = 110 + Math.random() * 150 + intensity * 40;
+    pool.push({
+      type: 'pickupShard',
+      x, y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s,
+      t: 0,
+      life: 0.34 + Math.random() * 0.22,
+      angle: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 18,
+      w: 3 + Math.random() * 3.5,
+      h: 1.3 + Math.random() * 1.7
+    });
+  }
+}
+
 export function update(dt){
   for (let i=pool.length-1;i>=0;i--){
     const p = pool[i];
@@ -109,6 +138,11 @@ export function update(dt){
       p.angle += (p.spin || 0) * dt;
       p.vx *= 0.992;
       p.vy *= 0.996;
+    } else if (p.type === 'pickupShard'){
+      p.vy += 260 * dt;
+      p.angle += (p.spin || 0) * dt;
+      p.vx *= 0.986;
+      p.vy *= 0.989;
     } else if (p.type === 'shell'){
       p.vy += 420 * dt;
       p.angle += (p.spin || 0) * dt;
@@ -131,4 +165,12 @@ export function draw(g){
   }
 }
 
-export const Particles = { reset, update, draw, spawnImpact, spawnBotExplosion, spawnShellEject };
+export const Particles = {
+  reset,
+  update,
+  draw,
+  spawnImpact,
+  spawnBotExplosion,
+  spawnShellEject,
+  spawnPickupBurst
+};

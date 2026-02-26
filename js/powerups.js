@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { world } from './utils.js';
 import { Theme } from './theme.js';
 import { Particles } from './particles.js';
+import { SFX } from './sfx.js';
 
 const items = [];
 
@@ -29,10 +30,10 @@ const MINOR_REPAIR = {
 const minorWalkerBase = Math.max(1.01, CONFIG.POWERUPS.MINOR_WALKER_FACTOR ?? 1.08);
 const minorReloadFactor = Math.max(0.82, 1 - (minorWalkerBase - 1) * 0.75);
 const MINOR_WALKER_DROPS = [
-  { key: 'MW', type: 'upgrade', stat: 'speedMul', factor: minorWalkerBase, mediumTier: true },
-  { key: 'MD', type: 'upgrade', stat: 'damage', factor: 1 + (minorWalkerBase - 1) * 0.80, mediumTier: true },
-  { key: 'MF', type: 'upgrade', stat: 'projSpeedMul', factor: 1 + (minorWalkerBase - 1) * 0.95, mediumTier: true },
-  { key: 'MR', type: 'upgrade', stat: 'reloadMul', factor: minorReloadFactor, mediumTier: true }
+  { key: 'W', type: 'upgrade', stat: 'speedMul', factor: minorWalkerBase, mediumTier: true },
+  { key: 'D', type: 'upgrade', stat: 'damage', factor: 1 + (minorWalkerBase - 1) * 0.80, mediumTier: true },
+  { key: 'F', type: 'upgrade', stat: 'projSpeedMul', factor: 1 + (minorWalkerBase - 1) * 0.95, mediumTier: true },
+  { key: 'R', type: 'upgrade', stat: 'reloadMul', factor: minorReloadFactor, mediumTier: true }
 ];
 
 function chooseWeaponDrop(){
@@ -121,7 +122,8 @@ export function update(dt){
       const it = items[i];
       const dx = it.x - p.x, dy = it.y - p.y;
       if (dx*dx + dy*dy <= (R+18)*(R+18)){
-        Particles.spawnImpact(it.x, it.y, 'pickupFlash', 1.0);
+        Particles.spawnPickupBurst?.(it.x, it.y, 1.0);
+        SFX.playPickup?.();
         apply(it.def, p);
         items.splice(i,1);
       }
