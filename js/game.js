@@ -23,30 +23,30 @@ const DEBUG_WEAPON_ORDER = ['rifle', 'longrifle', 'shotgun', 'heavyshotgun', 'ch
 const CHASSIS_PRESETS = {
   amass: {
     hp: 180,
-    speedMul: 0.78,
+    speedMul: 0.75,
     weapons: { left: 'cannon', right: 'rifle' },
-    allowedWeapons: ['rifle', 'longrifle', 'cannon', 'chaingun', 'chaincannon'],
+    allowedWeapons: ['rifle', 'longrifle', 'cannon', 'chaingun', 'chaincannon','shotgun'],
     allowedMounts: ['left', 'right']
   },
   windward: {
     hp: 120,
     speedMul: 1.0,
     weapons: { left: 'rocket', right: 'rifle' },
-    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'rocket', 'rocketpod'],
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'rocket', 'rocketpod','chaingun'],
     allowedMounts: ['left', 'right']
   },
   talon: {
     hp: 150,
     speedMul: 0.94,
     weapons: { left: 'shotgun', right: 'rifle' },
-    allowedWeapons: ['rifle', 'longrifle', 'shotgun', 'heavyshotgun'],
+    allowedWeapons: ['rifle', 'longrifle', 'shotgun', 'heavyshotgun','chaingun'],
     allowedMounts: ['left', 'right']
   },
   estelle: {
     hp: 72,
-    speedMul: 1.32,
+    speedMul: 1.5,
     weapons: { left: 'beamer', right: null },
-    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'punchbeamer', 'shotgun'],
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'punchbeamer', 'shotgun','chaingun'],
     allowedMounts: ['left']
   }
 };
