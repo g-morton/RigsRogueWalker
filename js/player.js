@@ -14,6 +14,7 @@ const WEAPON_SIZE = {
   shotgun: 2,
   heavyshotgun: 3,
   beamer: 2,
+  punchbeamer: 2,
   chaingun: 2,
   chaincannon: 4,
   rocket: 3,
@@ -247,8 +248,8 @@ export class Player{
     this.shoot(side, type);
   }
 
-  getBeamerPose(side){
-    const m = getMuzzleLocal('beamer');
+  getBeamPose(side, type = 'beamer'){
+    const m = getMuzzleLocal(type);
     const s = (side === 'left') ? -1 : 1;
     const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
     const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
@@ -332,11 +333,12 @@ export class Player{
     const wx = this.x + rx;
     const wy = this.y + ry;
 
-    if (type === 'beamer'){
-      const pose = this.getBeamerPose(side);
+    if (type === 'beamer' || type === 'punchbeamer'){
+      const pose = this.getBeamPose(side, type);
       Projectiles.fireBeam?.(pose.x, pose.y, pose.angle, {
+        weaponType: type,
         damageMul: this.damageMul,
-        track: () => this.getBeamerPose(side)
+        track: () => this.getBeamPose(side, type)
       });
       SFX.playShot(type);
       this.cooldown[side] = getCooldownSec(type) * this.reloadMul;

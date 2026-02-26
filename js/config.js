@@ -50,6 +50,7 @@ export const CONFIG = {
     shotgun: { cooldown: 1.50, muzzle:{x:8, y:-6}, pellets: 7, spreadDeg: 3 },
     heavyshotgun: { cooldown: 1.85, muzzle:{x:10, y:-4}, pellets: 3, spreadDeg: 4 },
     beamer:  { cooldown: 1.50, muzzle:{x:6, y:-12} },
+    punchbeamer: { cooldown: 1.65, muzzle:{x:4, y:-8} },
     chaingun:{
       cooldown: 0.08, muzzle:{x:0, y:-60},
       windup: 0.80,
@@ -81,6 +82,12 @@ export const CONFIG = {
       coreRadius: 7, lightningRadius: 20,
       nearFrac: 0.25, farDamageMul: 0.10,
       closeBoostFrac: 0.25, closeBoostMul: 2.8
+    },
+    punchbeamer: {
+      range: 260, life: 0.38, damage: 100, jitter: 18, arcs: 4,
+      coreRadius: 14, lightningRadius: 52,
+      nearFrac: 0.28, hitRangeFrac: 0.28, farDamageMul: 1.00,
+      closeBoostFrac: 0.28, closeBoostMul: 5.0
     },
     chaingun: { speed: 600, life: 2, len: 12, w: 3, damage: 5 },
     chaincannon: { speed: 600, life: 2.1, len: 16, w: 4, damage: 10 },

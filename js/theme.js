@@ -135,21 +135,95 @@ export const Theme = {
   },
 
   drawBeam(g, b){
+    const isPunch = b.type === 'punchbeamer';
     const t = b.t / Math.max(0.001, b.life);
-    const nearFrac = Math.max(0.05, Math.min(0.85, b.nearFrac ?? 0.25));
     const fade = Math.max(0, 1 - t);
-    const alpha = fade * (0.72 + Math.random() * 0.45);
     const dx = b.x2 - b.x1;
     const dy = b.y2 - b.y1;
     const len = Math.hypot(dx, dy) || 1;
     const nx = -dy / len;
     const ny = dx / len;
+
+    if (isPunch){
+      const visibleFrac = Math.max(0.10, Math.min(0.30, b.hitRangeFrac ?? b.nearFrac ?? 0.18));
+      const ex = b.x1 + dx * visibleFrac;
+      const ey = b.y1 + dy * visibleFrac;
+      const tipX = ex, tipY = ey;
+      const mkZig = (amp, phase = 0, bias = 0, steps = 8) => {
+        const pts = [];
+        for (let i = 0; i <= steps; i++){
+          const k = i / steps;
+          const taper = Math.sin(Math.PI * k); // 0 at ends -> converges to muzzle/tip
+          const side = (i % 2 === 0 ? -1 : 1) * (0.7 + 0.3 * Math.sin(phase + i * 1.37));
+          const off = (bias + side * amp) * taper;
+          pts.push({
+            x: b.x1 + dx * k + nx * off,
+            y: b.y1 + dy * k + ny * off
+          });
+        }
+        return pts;
+      };
+      const strokePts = (pts, color, width) => {
+        g.strokeStyle = color;
+        g.lineWidth = width;
+        g.beginPath();
+        g.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
+        g.stroke();
+      };
+      const seed = (b.x1 * 0.017 + b.y1 * 0.011 + b.t * 9.0);
+
+      g.save();
+      g.globalAlpha = fade * (0.88 + Math.random() * 0.18);
+      g.lineCap = 'round';
+      g.lineJoin = 'round';
+
+      g.fillStyle = 'rgba(96,22,46,0.24)';
+      g.beginPath();
+      g.arc(b.x1, b.y1, 12 + Math.random() * 3, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = 'rgba(255,235,245,0.72)';
+      g.beginPath();
+      g.arc(b.x1, b.y1, 4 + Math.random() * 1.5, 0, Math.PI * 2);
+      g.fill();
+
+      // Center lines
+      const coreWhite = mkZig(18, seed + 0.2, 0, 8);
+      const coreDark = mkZig(10, seed + 1.1, 0, 8);
+      // Outer pink traces
+      const outerL = mkZig(34, seed + 0.7, 10, 7);
+      const outerR = mkZig(34, seed + 1.9, -10, 7);
+
+      // Ensure hard convergence at weapon max visual tip.
+      coreWhite[coreWhite.length - 1] = { x: tipX, y: tipY };
+      coreDark[coreDark.length - 1] = { x: tipX, y: tipY };
+      outerL[outerL.length - 1] = { x: tipX, y: tipY };
+      outerR[outerR.length - 1] = { x: tipX, y: tipY };
+
+      strokePts(outerL, 'rgba(248,174,180,0.95)', 3.0);
+      strokePts(outerR, 'rgba(248,174,180,0.95)', 3.0);
+      strokePts(coreDark, 'rgba(156,116,120,0.86)', 2.2);
+      strokePts(coreWhite, 'rgba(255,255,255,0.98)', 6.2);
+
+      g.restore();
+      return;
+    }
+
+    const beamOuter = isPunch ? 'rgba(104, 33, 33, 0.78)' : 'rgba(42,102,255,0.40)';
+    const beamOuterTail = isPunch ? 'rgba(148,20,20,0.10)' : 'rgba(42,102,255,0.04)';
+    const beamNearHot = isPunch ? 'rgba(213, 145, 138, 0.88)' : 'rgba(42,102,255,0.62)';
+    const crackOuter = isPunch ? 'rgba(243, 125, 123, 0.98)' : 'rgba(42,102,255,0.98)';
+    const filamentOuter = isPunch ? 'rgb(255, 186, 182)' : 'rgba(42,102,255,0.74)';
+    const nearFrac = Math.max(0.05, Math.min(0.85, b.nearFrac ?? 0.25));
+    const alpha = fade * (0.72 + Math.random() * 0.45);
     const hx = b.x1 + dx * nearFrac;
     const hy = b.y1 + dy * nearFrac;
     const tailStart = Math.max(0.06, nearFrac);
     const tx = b.x1 + dx * tailStart;
     const ty = b.y1 + dy * tailStart;
-    const arcEndK = Math.min(1, nearFrac + 0.05);
+    const arcEndK = isPunch
+      ? Math.min(0.10, nearFrac + 0.03)
+      : Math.min(1, nearFrac + 0.05);
     const ax2 = b.x1 + dx * arcEndK;
     const ay2 = b.y1 + dy * arcEndK;
 
@@ -157,71 +231,83 @@ export const Theme = {
     g.globalAlpha = alpha;
     g.lineCap = 'round';
 
-    // Core beam, split into strong near segment and faded tail segment.
-    g.strokeStyle = 'rgba(42,102,255,0.40)';
-    g.lineWidth = 15.5;
-    g.beginPath();
-    g.moveTo(b.x1, b.y1);
-    g.lineTo(tx, ty);
-    g.stroke();
-    g.strokeStyle = 'rgba(42,102,255,0.04)';
-    g.lineWidth = 6.6;
-    g.beginPath();
-    g.moveTo(tx, ty);
-    g.lineTo(b.x2, b.y2);
-    g.stroke();
+    if (!isPunch){
+      // Core beam, split into strong near segment and faded tail segment.
+      g.strokeStyle = beamOuter;
+      g.lineWidth = 15.5;
+      g.beginPath();
+      g.moveTo(b.x1, b.y1);
+      g.lineTo(tx, ty);
+      g.stroke();
+      g.strokeStyle = beamOuterTail;
+      g.lineWidth = 6.6;
+      g.beginPath();
+      g.moveTo(tx, ty);
+      g.lineTo(b.x2, b.y2);
+      g.stroke();
 
-    g.strokeStyle = 'rgba(255,255,255,0.44)';
-    g.lineWidth = 10.5;
-    g.beginPath();
-    g.moveTo(b.x1, b.y1);
-    g.lineTo(tx, ty);
-    g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,0.05)';
-    g.lineWidth = 3.4;
-    g.beginPath();
-    g.moveTo(tx, ty);
-    g.lineTo(b.x2, b.y2);
-    g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.44)';
+      g.lineWidth = 10.5;
+      g.beginPath();
+      g.moveTo(b.x1, b.y1);
+      g.lineTo(tx, ty);
+      g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.05)';
+      g.lineWidth = 3.4;
+      g.beginPath();
+      g.moveTo(tx, ty);
+      g.lineTo(b.x2, b.y2);
+      g.stroke();
 
-    g.strokeStyle = 'rgba(255,255,255,0.98)';
-    g.lineWidth = 5.4;
-    g.beginPath();
-    g.moveTo(b.x1, b.y1);
-    g.lineTo(tx, ty);
-    g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,0.08)';
-    g.lineWidth = 1.5;
-    g.beginPath();
-    g.moveTo(tx, ty);
-    g.lineTo(b.x2, b.y2);
-    g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.98)';
+      g.lineWidth = 5.4;
+      g.beginPath();
+      g.moveTo(b.x1, b.y1);
+      g.lineTo(tx, ty);
+      g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.08)';
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.moveTo(tx, ty);
+      g.lineTo(b.x2, b.y2);
+      g.stroke();
 
-    // The first section is intentionally heavier to telegraph max damage.
-    g.strokeStyle = 'rgba(255,255,255,0.78)';
-    g.lineWidth = 8.2;
-    g.beginPath();
-    g.moveTo(b.x1, b.y1);
-    g.lineTo(hx, hy);
-    g.stroke();
+      // The first section is intentionally heavier to telegraph max damage.
+      g.strokeStyle = 'rgba(255,255,255,0.78)';
+      g.lineWidth = 8.2;
+      g.beginPath();
+      g.moveTo(b.x1, b.y1);
+      g.lineTo(hx, hy);
+      g.stroke();
 
-    g.strokeStyle = 'rgba(42,102,255,0.62)';
-    g.lineWidth = 11.8;
-    g.beginPath();
-    g.moveTo(b.x1, b.y1);
-    g.lineTo(hx, hy);
-    g.stroke();
+      g.strokeStyle = beamNearHot;
+      g.lineWidth = 11.8;
+      g.beginPath();
+      g.moveTo(b.x1, b.y1);
+      g.lineTo(hx, hy);
+      g.stroke();
+    } else {
+      // Punch beam is mostly raw arc crackle with a hot muzzle bloom.
+      g.beginPath();
+      //g.arc(b.x1, b.y1, 13.5 + Math.random() * 4.5, 0, Math.PI * 2);
+      //g.fillStyle = 'rgba(180,22,16,0.34)';
+      //g.fill();
+      g.beginPath();
+      g.arc(b.x1, b.y1, 6.0 + Math.random() * 2.2, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(255,170,120,0.62)';
+      g.fill();
+    }
 
     // Side crackles near muzzle (wide here, then quickly taper).
-    const muzzleArcs = 7 + ((Math.random() * 4) | 0);
+    const muzzleArcs = isPunch ? (11 + ((Math.random() * 6) | 0)) : (7 + ((Math.random() * 4) | 0));
     for (let j = 0; j < muzzleArcs; j++){
       const k0 = Math.random() * Math.max(0.02, arcEndK - 0.02);
       const side = Math.random() < 0.5 ? -1 : 1;
       const startEdgeJitter = (Math.random() * 2 - 1) * 4.5;
       const sx = b.x1 + dx * k0 + nx * side * startEdgeJitter;
       const sy = b.y1 + dy * k0 + ny * side * startEdgeJitter;
-      const lenSide = 20 + Math.random() * 24;
-      const lenForward = 2 + Math.random() * 8;
+      const lenSide = isPunch ? (26 + Math.random() * 34) : (20 + Math.random() * 24);
+      const lenForward = isPunch ? (4 + Math.random() * 10) : (2 + Math.random() * 8);
       const mx = sx + nx * side * lenSide * 0.42 + dx * lenForward * 0.25;
       const my = sy + ny * side * lenSide * 0.42 + dy * lenForward * 0.25;
       const ex = sx + nx * side * lenSide + dx * lenForward;
@@ -230,17 +316,19 @@ export const Theme = {
       g.moveTo(sx, sy);
       g.lineTo(mx, my);
       g.lineTo(ex, ey);
-      g.strokeStyle = 'rgba(42,102,255,0.98)';
-      g.lineWidth = 3.0 + Math.random() * 1.2;
+      g.strokeStyle = crackOuter;
+      g.lineWidth = (isPunch ? 3.8 : 3.0) + Math.random() * 1.3;
       g.stroke();
-      g.strokeStyle = 'rgba(255,255,255,0.96)';
-      g.lineWidth = 1.2 + Math.random() * 0.8;
-      g.stroke();
+      if (!isPunch){
+        g.strokeStyle = 'rgba(255,255,255,0.96)';
+        g.lineWidth = (isPunch ? 1.6 : 1.2) + Math.random() * 0.9;
+        g.stroke();
+      }
     }
 
     // Main lightning filaments: widest at muzzle, but constrained to the effective range window.
-    const arcs = Math.max(1, b.arcs ?? 3);
-    const wildness = Math.max(6, b.jitter ?? 8) * (1.1 + Math.random() * 0.9);
+    const arcs = Math.max(1, b.arcs ?? 3) + (isPunch ? 2 : 0);
+    const wildness = Math.max(6, b.jitter ?? 8) * (isPunch ? (1.7 + Math.random() * 1.0) : (1.1 + Math.random() * 0.9));
     for (let j = 0; j < arcs; j++){
       const points = 10 + ((Math.random() * 8) | 0);
       const phase = b.t * 30 + j * 1.7;
@@ -263,8 +351,8 @@ export const Theme = {
         if (i === 0) g.moveTo(x, y);
         else g.lineTo(x, y);
 
-        if (i > 0 && i < points && Math.random() < (0.22 * (1 - k) + 0.03) * (1 - tailT * 0.8)){
-          const branchLen = 6 + Math.random() * 18;
+        if (i > 0 && i < points && Math.random() < ((isPunch ? 0.36 : 0.22) * (1 - k) + 0.03) * (1 - tailT * 0.8)){
+          const branchLen = (isPunch ? 10 : 6) + Math.random() * (isPunch ? 26 : 18);
           const branchSign = Math.random() < 0.5 ? -1 : 1;
           const bx = x + nx * branchSign * branchLen + dx * (Math.random() - 0.5) * 0.04;
           const by = y + ny * branchSign * branchLen + dy * (Math.random() - 0.5) * 0.04;
@@ -274,21 +362,25 @@ export const Theme = {
         }
       }
       // Blue outer filament with white hot center for contrast.
-      g.strokeStyle = 'rgba(42,102,255,0.74)';
-      g.lineWidth = 1.9 + Math.random() * 1.5;
+      g.strokeStyle = filamentOuter;
+      g.lineWidth = (isPunch ? 2.4 : 1.9) + Math.random() * 1.6;
       g.stroke();
-      g.strokeStyle = 'rgba(255,255,255,0.88)';
-      g.lineWidth = 1.0 + Math.random() * 1.0;
-      g.stroke();
+      if (!isPunch){
+        g.strokeStyle = 'rgba(255,255,255,0.88)';
+        g.lineWidth = (isPunch ? 1.3 : 1.0) + Math.random() * 1.0;
+        g.stroke();
+      }
     }
 
     // Hard visual cue for power drop: faint tail after arc/falloff zone.
-    g.strokeStyle = 'rgba(255,255,255,0.10)';
-    g.lineWidth = 2.0;
-    g.beginPath();
-    g.moveTo(ax2, ay2);
-    g.lineTo(b.x2, b.y2);
-    g.stroke();
+    if (!isPunch){
+      g.strokeStyle = 'rgba(255,255,255,0.10)';
+      g.lineWidth = 2.0;
+      g.beginPath();
+      g.moveTo(ax2, ay2);
+      g.lineTo(b.x2, b.y2);
+      g.stroke();
+    }
 
     g.restore();
   },
@@ -952,6 +1044,20 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       g.arc(5, -13, 5.2, Math.PI, Math.PI * 2);
       g.fill();
       break;
+    case 'punchbeamer': {
+      g.fillRect(-1, -9, 12, 17);   // smaller core body
+      g.fillRect(3, -2, 8, 8);      // rear mass
+      g.fillRect(2, 7, 5, 4);       // compact grip
+      g.beginPath();
+      g.arc(5, -11, 3.9, Math.PI, Math.PI * 2);
+      g.fill();
+      const accent = '#ff6a2b';
+      g.fillStyle = accent;
+      g.fillRect(1, -6, 2, 12);
+      g.fillRect(7, -6, 2, 12);
+      g.fillRect(3, -12, 4, 2);
+      break;
+    }
     case 'chaingun':
       g.fillRect(-2, -39, 12, 46);  // tall column
       g.fillRect(2, -42, 4, 6);    // tiny top nub

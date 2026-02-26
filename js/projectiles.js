@@ -45,6 +45,7 @@ function updateTrackedBeam(b){
 function makeBeamPayload(b, dt){
   const tickScale = dt / Math.max(0.001, b.life);
   const nearFrac = Math.max(0.05, Math.min(0.85, b.nearFrac ?? 0.25));
+  const hitRangeFrac = Math.max(0.05, Math.min(1, b.hitRangeFrac ?? 1));
   const farDamageMul = Math.max(0, Math.min(1, b.farDamageMul ?? 0.15));
   const closeBoostFrac = Math.max(0.02, Math.min(nearFrac, b.closeBoostFrac ?? 0.16));
   const closeBoostMul = Math.max(1, b.closeBoostMul ?? 2.8);
@@ -54,9 +55,10 @@ function makeBeamPayload(b, dt){
   return {
     x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
     damage: b.damage,
-    type: 'beamer',
+    type: b.type || 'beamer',
     damageAt(px, py, targetRadius = 0){
       const hit = closestPointOnSegment(px, py, b.x1, b.y1, b.x2, b.y2);
+      if (hit.u > hitRangeFrac) return 0;
       const radial = Math.max(0, Math.sqrt(hit.distSq) - Math.max(0, targetRadius));
       const fan = lightningRadius * (0.16 + 0.84 * hit.u);
       const edge = coreRadius + fan;
@@ -70,7 +72,13 @@ function makeBeamPayload(b, dt){
       let radialMul = 1;
       if (radial > coreRadius){
         const rr = (radial - coreRadius) / Math.max(1e-6, edge - coreRadius);
-        radialMul = (1 - Math.min(1, Math.max(0, rr))) * (0.3 + Math.random() * 0.7);
+        const edgeFade = 1 - Math.min(1, Math.max(0, rr));
+        if (b.type === 'punchbeamer'){
+          // Keep punchbeamer edge hits reliable to match its thick visual arcs.
+          radialMul = 0.65 + edgeFade * 0.35;
+        } else {
+          radialMul = edgeFade * (0.3 + Math.random() * 0.7);
+        }
       }
 
       return Math.max(0, b.damage * tickScale * distMul * closeMul * radialMul);
@@ -106,7 +114,8 @@ export function registerBeamResolver(fn){
 }
 
 export function fireBeam(x, y, angle, mods = {}){
-  const def = CONFIG.PROJECTILES.beamer || {};
+  const beamType = mods.weaponType || 'beamer';
+  const def = CONFIG.PROJECTILES[beamType] || CONFIG.PROJECTILES.beamer || {};
   const range = def.range ?? 980;
   const dx = Math.sin(angle);
   const dy = -Math.cos(angle);
@@ -116,6 +125,7 @@ export function fireBeam(x, y, angle, mods = {}){
   const damage = Math.max(1, (def.damage ?? 20) * damageMul);
 
   const beam = {
+    type: beamType,
     x1: x, y1: y, x2, y2,
     t: 0,
     life: def.life ?? 0.09,
@@ -126,6 +136,7 @@ export function fireBeam(x, y, angle, mods = {}){
     coreRadius: def.coreRadius ?? 6,
     lightningRadius: def.lightningRadius ?? 30,
     nearFrac: def.nearFrac ?? 0.25,
+    hitRangeFrac: def.hitRangeFrac ?? 1,
     farDamageMul: def.farDamageMul ?? 0.15,
     closeBoostFrac: def.closeBoostFrac ?? 0.16,
     closeBoostMul: def.closeBoostMul ?? 2.8,

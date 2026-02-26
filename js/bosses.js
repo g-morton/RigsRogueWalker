@@ -414,7 +414,7 @@ export function update(dt){
       b.hp -= damage;
       Particles.spawnImpact(proj.x, proj.y, 'playerShot', 0.8);
       Particles.spawnImpact(proj.x, proj.y, 'damage', damage / 10);
-      if (proj.type !== 'beamer') SFX.playHit?.(damage);
+      if (proj.type !== 'beamer' && proj.type !== 'punchbeamer') SFX.playHit?.(damage);
       return true;
     });
 

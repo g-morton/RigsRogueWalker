@@ -19,7 +19,7 @@ let loopSeq = 0;
 let bossPhase = 'none'; // none | clearing | approach | fight
 let godMode = false;
 
-const DEBUG_WEAPON_ORDER = ['rifle', 'longrifle', 'shotgun', 'heavyshotgun', 'chaingun', 'chaincannon', 'beamer', 'rocket', 'rocketpod', 'cannon'];
+const DEBUG_WEAPON_ORDER = ['rifle', 'longrifle', 'shotgun', 'heavyshotgun', 'chaingun', 'chaincannon', 'beamer', 'punchbeamer', 'rocket', 'rocketpod', 'cannon'];
 const CHASSIS_PRESETS = {
   amass: {
     hp: 180,
@@ -46,7 +46,7 @@ const CHASSIS_PRESETS = {
     hp: 72,
     speedMul: 1.32,
     weapons: { left: 'beamer', right: null },
-    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'shotgun'],
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'punchbeamer', 'shotgun'],
     allowedMounts: ['left']
   }
 };

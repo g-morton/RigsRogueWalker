@@ -23,6 +23,8 @@ const SIDE_WEAPON_DROPS = [
   { key:'R-CC', type:'weapon', side:'right', weapon:'chaincannon' },
   { key:'L-Be', type:'weapon', side:'left',  weapon:'beamer'   },
   { key:'R-Be', type:'weapon', side:'right', weapon:'beamer'   },
+  { key:'L-PB', type:'weapon', side:'left',  weapon:'punchbeamer' },
+  { key:'R-PB', type:'weapon', side:'right', weapon:'punchbeamer' },
   { key:'L-Ro', type:'weapon', side:'left',  weapon:'rocket'   },
   { key:'R-Ro', type:'weapon', side:'right', weapon:'rocket'   },
   { key:'L-RP', type:'weapon', side:'left',  weapon:'rocketpod' },
