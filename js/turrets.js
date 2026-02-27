@@ -131,7 +131,7 @@ function distPointToSegmentSq(px, py, x1, y1, x2, y2){
   return (px-bx)*(px-bx) + (py-by)*(py-by);
 }
 
-Projectiles.registerBeamResolver?.((beam)=>{
+function resolveBeamTurretHits(beam){
   for (let i = turrets.length - 1; i >= 0; i--){
     const t = turrets[i];
     const hitRadius = t.size * 0.9;
@@ -149,7 +149,10 @@ Projectiles.registerBeamResolver?.((beam)=>{
       turrets.splice(i, 1);
     }
   }
-});
+}
+
+Projectiles.registerBeamResolver?.(resolveBeamTurretHits);
+Projectiles.registerPunchBeamResolver?.(resolveBeamTurretHits);
 
 // --- API ---------------------------------------------------------------------
 export function reset(){

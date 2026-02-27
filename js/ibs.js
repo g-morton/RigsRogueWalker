@@ -116,7 +116,7 @@ function spawnOne(forcedY = null){
 
 function spawnWave(n){ for (let i=0;i<Math.max(1,n|0);i++) spawnOne(); }
 
-Projectiles.registerBeamResolver?.((beam)=>{
+function resolveBeamIBSHits(beam){
   const r = CONFIG.IBS.R;
   for (let i = ibs.length - 1; i >= 0; i--){
     const p = ibs[i];
@@ -145,7 +145,10 @@ Projectiles.registerBeamResolver?.((beam)=>{
       world.ibsHit = (world.ibsHit|0) + 1;
     }
   }
-});
+}
+
+Projectiles.registerBeamResolver?.(resolveBeamIBSHits);
+Projectiles.registerPunchBeamResolver?.(resolveBeamIBSHits);
 
 // ---------------------------------------------------------------------------
 // API

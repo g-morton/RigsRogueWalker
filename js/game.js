@@ -44,10 +44,15 @@ const CHASSIS_PRESETS = {
   },
   estelle: {
     hp: 72,
-    speedMul: 1.5,
-    weapons: { left: 'beamer', right: null },
-    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'punchbeamer', 'shotgun','chaingun'],
-    allowedMounts: ['left']
+    speedMul: 3,
+    model: 'estelle',
+    mountOffsetX: 18,
+    mountOffsetY: 1,
+    weapons: { left: 'beamer', right: 'punchbeamer' },
+    lockedWeapons: { right: 'punchbeamer' },
+    allowedWeapons: ['rifle', 'longrifle', 'beamer', 'shotgun', 'chaingun'],
+    allowedMounts: ['left', 'right'],
+    allowedWeaponSides: ['left']
   }
 };
 let selectedChassis = 'windward';
@@ -69,7 +74,8 @@ function buildPlayerPreset(){
   const preset = CHASSIS_PRESETS[selectedChassis] || CHASSIS_PRESETS.windward;
   world.chassisKey = selectedChassis;
   world.allowedWeaponDrops = Array.isArray(preset.allowedWeapons) ? [...preset.allowedWeapons] : null;
-  world.allowedWeaponSides = Array.isArray(preset.allowedMounts) ? [...preset.allowedMounts] : null;
+  const dropSides = Array.isArray(preset.allowedWeaponSides) ? preset.allowedWeaponSides : preset.allowedMounts;
+  world.allowedWeaponSides = Array.isArray(dropSides) ? [...dropSides] : null;
   return preset;
 }
 

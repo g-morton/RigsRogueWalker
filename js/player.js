@@ -34,11 +34,27 @@ export class Player{
       ? opts.allowedMounts
       : ['left', 'right'];
     this.allowedMounts = new Set(allowedMounts);
+    this.model = opts.model || 'rig';
+    this.mountOffsetX = Math.max(0, opts.mountOffsetX ?? CONFIG.PLAYER.MOUNT_OFFSET_X);
+    this.mountOffsetY = opts.mountOffsetY ?? CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    this.lockedWeapons = {
+      left: (typeof opts.lockedWeapons?.left === 'string') ? opts.lockedWeapons.left : null,
+      right: (typeof opts.lockedWeapons?.right === 'string') ? opts.lockedWeapons.right : null
+    };
 
     this.weapons = {
       left: this.allowedMounts.has('left') ? (opts.weapons?.left ?? 'rifle') : null,
       right: this.allowedMounts.has('right') ? (opts.weapons?.right ?? null) : null
     };
+    for (const side of ['left', 'right']){
+      if (!this.allowedMounts.has(side)){
+        this.weapons[side] = null;
+        continue;
+      }
+      if (this.lockedWeapons[side]){
+        this.weapons[side] = this.lockedWeapons[side];
+      }
+    }
     this.cooldown = { left: 0, right: 0 };
     this.chaingun = {
       left:  { heat: 0, windupT: 0, spinning: false, overheated: false, windupPlayed: false },
@@ -91,34 +107,25 @@ export class Player{
     const my = cy * (world.h / Math.max(1, rect.height));
     const absolute = Math.atan2(my - this.y, mx - this.x);
     const relative = absolute + Math.PI/2;
+    if (this.model === 'estelle'){
+      const target = relative;
+      const turnLerp = insideCanvas ? 0.34 : 0.24;
+      const delta = Math.atan2(Math.sin(target - this.angle), Math.cos(target - this.angle));
+      this.angle += delta * turnLerp;
+    } else {
     const maxTwist = insideCanvas ? MAX_TWIST_CANVAS : MAX_TWIST;
     const twistLerp = insideCanvas
       ? (CONFIG.PLAYER.TWIST_LERP_CANVAS ?? 0.24)
       : (CONFIG.PLAYER.TWIST_LERP ?? 0.15);
     const limited = Math.max(-maxTwist, Math.min(maxTwist, relative));
     this.angle += (limited - this.angle) * twistLerp;
+    }
 
     // cooldown tick
     this.cooldown.left = Math.max(0, this.cooldown.left - dt);
     this.cooldown.right = Math.max(0, this.cooldown.right - dt);
 
-    // Damage-bucket weapon loss: every 20% max HP damage can pop one larger weapon.
-    const hpNow = Math.max(0, this.hp ?? this.maxHp);
-    if (hpNow < this.lastHp){
-      this.damageBucket += (this.lastHp - hpNow);
-    }
-    this.lastHp = hpNow;
-    const breakFrac = Math.max(0.2, Math.min(0.8, CONFIG.PLAYER.WEAPON_BREAK_FRAC ?? 0.20));
-    const threshold = this.maxHp * breakFrac;
-    if (this.damageBucket >= threshold){
-      const broke = this.breakLargestWeapon();
-      if (broke){
-        this.damageBucket -= threshold;
-      } else {
-        // Keep below threshold when no valid break is possible (e.g. only one weapon equipped).
-        this.damageBucket = Math.min(this.damageBucket, threshold * 0.95);
-      }
-    }
+    this.lastHp = Math.max(0, this.hp ?? this.maxHp);
 
     // Damage-state feedback (sparks/smoke as HP drops)
     const hpRatio = this.hp / Math.max(1, this.maxHp);
@@ -155,6 +162,10 @@ export class Player{
   setWeapon(side, type){
     if (side !== 'left' && side !== 'right') return;
     if (!this.allowedMounts?.has(side)) return;
+    if (this.lockedWeapons?.[side]){
+      this.weapons[side] = this.lockedWeapons[side];
+      return;
+    }
     this.rocketPodBurst[side] = null;
     this.weapons[side] = type || null;
     if (!CHAIN_WEAPONS.has(type)){
@@ -167,9 +178,6 @@ export class Player{
     this.setWeapon(side, type);
     const maxHp = Math.max(1, this.maxHp ?? 1);
     this.hp = Math.min(maxHp, (this.hp ?? maxHp) + maxHp * 0.25);
-    const breakFrac = Math.max(0.2, Math.min(0.8, CONFIG.PLAYER.WEAPON_BREAK_FRAC ?? 0.20));
-    const threshold = maxHp * breakFrac;
-    this.damageBucket = Math.max(0, (this.damageBucket ?? 0) - threshold);
     this.lastHp = Math.max(0, this.hp ?? maxHp);
   }
 
@@ -251,8 +259,8 @@ export class Player{
   getBeamPose(side, type = 'beamer'){
     const m = getMuzzleLocal(type);
     const s = (side === 'left') ? -1 : 1;
-    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
-    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const ax = s * this.mountOffsetX;
+    const ay = this.mountOffsetY;
     const lx = ax + s * m.x;
     const ly = ay + m.y;
     const a = this.angle;
@@ -268,8 +276,8 @@ export class Player{
   getMuzzlePose(side, type){
     const m = getMuzzleLocal(type);
     const s = (side === 'left') ? -1 : 1;
-    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
-    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const ax = s * this.mountOffsetX;
+    const ay = this.mountOffsetY;
     const lx = ax + s * m.x;
     const ly = ay + m.y;
     const a = this.angle;
@@ -322,8 +330,8 @@ export class Player{
 
     const m = getMuzzleLocal(type);
     const s = (side === 'left') ? -1 : 1;
-    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
-    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const ax = s * this.mountOffsetX;
+    const ay = this.mountOffsetY;
     let lx = ax + s * m.x;
     let ly = ay + m.y;
 
@@ -481,8 +489,8 @@ export class Player{
 
   getMountWorld(side){
     const s = (side === 'left') ? -1 : 1;
-    const ax = s * CONFIG.PLAYER.MOUNT_OFFSET_X;
-    const ay = CONFIG.PLAYER.MOUNT_OFFSET_Y;
+    const ax = s * this.mountOffsetX;
+    const ay = this.mountOffsetY;
     const a = this.angle;
     const rx = ax * Math.cos(a) - ay * Math.sin(a);
     const ry = ax * Math.sin(a) + ay * Math.cos(a);
@@ -494,9 +502,10 @@ export class Player{
     for (const side of ['left', 'right']){
       const w = this.weapons[side];
       if (!w) continue;
+      if (this.lockedWeapons?.[side]) continue;
       entries.push({ side, type: w, size: WEAPON_SIZE[w] ?? 1 });
     }
-    if (entries.length <= 1) return false; // always keep at least one weapon
+    if (entries.length <= 0) return false;
 
     entries.sort((a, b) => b.size - a.size);
     const drop = entries[0];

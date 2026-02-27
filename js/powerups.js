@@ -37,14 +37,11 @@ const MINOR_REPAIR = {
   type: 'repair',
   healFrac: CONFIG.POWERUPS.MINOR_REPAIR_HEAL_FRAC ?? 0.15
 };
-const minorWalkerBase = Math.max(1.01, CONFIG.POWERUPS.MINOR_WALKER_FACTOR ?? 1.08);
-const minorReloadFactor = Math.max(0.82, 1 - (minorWalkerBase - 1) * 0.75);
-const MINOR_WALKER_DROPS = [
-  { key: 'W', type: 'upgrade', stat: 'speedMul', factor: minorWalkerBase, mediumTier: true },
-  { key: 'D', type: 'upgrade', stat: 'damage', factor: 1 + (minorWalkerBase - 1) * 0.80, mediumTier: true },
-  { key: 'F', type: 'upgrade', stat: 'projSpeedMul', factor: 1 + (minorWalkerBase - 1) * 0.95, mediumTier: true },
-  { key: 'R', type: 'upgrade', stat: 'reloadMul', factor: minorReloadFactor, mediumTier: true }
-];
+const MEDIUM_REPAIR = {
+  key: 'HP++',
+  type: 'repair',
+  healFrac: CONFIG.POWERUPS.MEDIUM_REPAIR_HEAL_FRAC ?? 0.30
+};
 
 function chooseWeaponDrop(){
   const allowed = Array.isArray(world.allowedWeaponDrops) ? world.allowedWeaponDrops : null;
@@ -58,13 +55,9 @@ function chooseWeaponDrop(){
   return src[(Math.random() * src.length) | 0];
 }
 
-function chooseMinorWalkerDrop(){
-  return MINOR_WALKER_DROPS[(Math.random() * MINOR_WALKER_DROPS.length) | 0];
-}
-
 function chooseDropFromTurretType(type){
   if (type === 'small') return MINOR_REPAIR;
-  if (type === 'medium') return chooseMinorWalkerDrop();
+  if (type === 'medium') return MEDIUM_REPAIR;
   if (type === 'large') return chooseWeaponDrop();
   return null;
 }
@@ -82,11 +75,11 @@ export function spawnFromTurret(x, y, type){
 function chooseBossDrop(hpFactor){
   // Higher HP bosses skew toward weapon drops.
   const weaponChance = Math.min(0.72, 0.24 + hpFactor * 0.36);
-  const repairChance = Math.max(0.12, 0.32 - hpFactor * 0.14);
+  const mediumRepairChance = Math.max(0.12, 0.30 - hpFactor * 0.12);
   const r = Math.random();
   if (r < weaponChance) return chooseWeaponDrop();
-  if (r < weaponChance + repairChance) return MINOR_REPAIR;
-  return chooseMinorWalkerDrop();
+  if (r < weaponChance + mediumRepairChance) return MEDIUM_REPAIR;
+  return MINOR_REPAIR;
 }
 
 export function spawnBossBurst(x, y, maxHp = 260){
@@ -96,7 +89,7 @@ export function spawnBossBurst(x, y, maxHp = 260){
 
   // Guarantee at least one repair and one weapon from larger bosses.
   const guaranteed = [];
-  if (count >= 4) guaranteed.push(MINOR_REPAIR);
+  if (count >= 4) guaranteed.push(MEDIUM_REPAIR);
   if (count >= 5) guaranteed.push(chooseWeaponDrop());
 
   for (let i = 0; i < count; i++){
@@ -156,15 +149,6 @@ export function update(dt){
 function apply(def, p){
   if (def.type === 'weapon'){
     p.grantWeaponFromPickup?.(def.side, def.weapon) ?? p.setWeapon(def.side, def.weapon);
-  } else if (def.type === 'upgrade'){
-    if (def.mediumTier) p.addMediumRigMark?.();
-    switch(def.stat){
-      case 'speedMul':      p.speedMul       = Math.min(2.0, p.speedMul * (def.factor ?? 1.12)); break;
-      case 'projSpeedMul':  p.projSpeedMul   = Math.min(2.5, p.projSpeedMul * (def.factor ?? 1.15)); break;
-      case 'reloadMul':     p.reloadMul      = Math.max(0.4, p.reloadMul * (def.factor ?? 0.88)); break;
-      case 'damage':        p.damageMul      = Math.min(3.0, p.damageMul * (def.factor ?? 1.10)); break;
-      default: break;
-    }
   } else if (def.type === 'repair'){
     const maxHp = Math.max(1, p.maxHp ?? 1);
     const heal = maxHp * (def.healFrac ?? 0.35);

@@ -20,7 +20,14 @@ export const Theme = {
 
   // Player + weapons visual
   drawPlayer(g, p){
+    if (p.model === 'estelle'){
+      drawEstellePlayer(g, p);
+      return;
+    }
+
     const P = CONFIG.PLAYER;
+    const mountX = p.mountOffsetX ?? P.MOUNT_OFFSET_X;
+    const mountY = p.mountOffsetY ?? P.MOUNT_OFFSET_Y;
 
     // legs
     const legPhase = Math.sin(p.t * P.LEG_SPEED * Math.PI * 2);
@@ -58,11 +65,11 @@ export const Theme = {
     // weapon mounts
     if (p.weapons.left){
       const heatL = p.chaingun?.left?.heat ?? 0;
-      drawWeapon(g, -P.MOUNT_OFFSET_X, P.MOUNT_OFFSET_Y, 'left', p.weapons.left, heatL);
+      drawWeapon(g, -mountX, mountY, 'left', p.weapons.left, heatL);
     }
     if (p.weapons.right){
       const heatR = p.chaingun?.right?.heat ?? 0;
-      drawWeapon(g,  P.MOUNT_OFFSET_X, P.MOUNT_OFFSET_Y, 'right', p.weapons.right, heatR);
+      drawWeapon(g,  mountX, mountY, 'right', p.weapons.right, heatR);
     }
 
     g.restore();
@@ -145,9 +152,11 @@ export const Theme = {
     const ny = dx / len;
 
     if (isPunch){
-      const visibleFrac = Math.max(0.10, Math.min(0.30, b.hitRangeFrac ?? b.nearFrac ?? 0.18));
+      const visibleFrac = Math.max(0.03, Math.min(1, b.hitRangeFrac ?? b.nearFrac ?? 0.18));
       const ex = b.x1 + dx * visibleFrac;
       const ey = b.y1 + dy * visibleFrac;
+      const punchDx = ex - b.x1;
+      const punchDy = ey - b.y1;
       const tipX = ex, tipY = ey;
       const mkZig = (amp, phase = 0, bias = 0, steps = 8) => {
         const pts = [];
@@ -157,8 +166,8 @@ export const Theme = {
           const side = (i % 2 === 0 ? -1 : 1) * (0.7 + 0.3 * Math.sin(phase + i * 1.37));
           const off = (bias + side * amp) * taper;
           pts.push({
-            x: b.x1 + dx * k + nx * off,
-            y: b.y1 + dy * k + ny * off
+            x: b.x1 + punchDx * k + nx * off,
+            y: b.y1 + punchDy * k + ny * off
           });
         }
         return pts;
@@ -204,6 +213,11 @@ export const Theme = {
       strokePts(outerR, 'rgba(248,174,180,0.95)', 3.0);
       strokePts(coreDark, 'rgba(156,116,120,0.86)', 2.2);
       strokePts(coreWhite, 'rgba(255,255,255,0.98)', 6.2);
+      // Mark exact effective end so the range reads clearly in motion.
+      g.beginPath();
+      g.arc(tipX, tipY, 2.2 + Math.random() * 0.7, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(255,236,238,0.96)';
+      g.fill();
 
       g.restore();
       return;
@@ -503,12 +517,12 @@ export const Theme = {
     g.fillStyle = BG; g.textAlign = 'center'; g.textBaseline = 'middle';
     if (key.includes('-')){
       const [side, code] = key.split('-');
-      g.font = 'bold 12px monospace';
-      g.fillText(side, it.x, it.y - 5);
-      g.font = 'bold 13px monospace';
-      g.fillText(code, it.x, it.y + 6);
-    } else {
+      g.font = 'bold 14px monospace';
+      g.fillText(side, it.x, it.y - 6);
       g.font = 'bold 15px monospace';
+      g.fillText(code, it.x, it.y + 7);
+    } else {
+      g.font = 'bold 18px monospace';
       g.fillText(key, it.x, it.y + 1);
     }
   },
@@ -874,6 +888,106 @@ drawIBSBubble(g, p, r){
 
 
 };
+
+function drawEstellePlayer(g, p){
+  const phase = Math.sin(p.t * (CONFIG.PLAYER.LEG_SPEED || 0.7) * Math.PI * 2 * 1.8);
+  const rightSupport = phase >= 0;
+  const swayX = rightSupport ? 2.0 : -2.0;
+  const headBob = Math.sin(p.t * (CONFIG.PLAYER.HEAD_BOB_SPEED || 0.5) * Math.PI * 2) * 1.5;
+  const mountX = p.mountOffsetX ?? 18;
+  const mountY = p.mountOffsetY ?? 1;
+
+  g.save();
+  g.translate(p.x, p.y);
+  g.rotate(p.angle);
+  g.scale(0.9, 0.9);
+  g.fillStyle = INK;
+  g.lineJoin = 'miter';
+
+  // Step 2: legs (drawn first, side-mounted, snappy two-pose).
+  if (rightSupport){
+    g.fillRect(-22 + swayX, 4, 8, 20);  // trailing left
+    g.fillRect(14 + swayX, 8, 8, 30);   // planted right
+  } else {
+    g.fillRect(-22 + swayX, 8, 8, 30);  // planted left
+    g.fillRect(14 + swayX, 4, 8, 20);   // trailing right
+  }
+
+  // Step 1: squat core body.
+  g.beginPath();
+  g.moveTo(-15 + swayX, -11);
+  g.lineTo(15 + swayX, -11);
+  g.lineTo(18 + swayX, -3);
+  g.lineTo(26 + swayX, -3);
+  g.lineTo(26 + swayX, 19);
+  g.lineTo(13 + swayX, 19);
+  g.lineTo(13 + swayX, 33);
+  g.lineTo(0 + swayX, 43);
+  g.lineTo(-13 + swayX, 33);
+  g.lineTo(-13 + swayX, 19);
+  g.lineTo(-20 + swayX, 19);
+  g.lineTo(-18 + swayX, 13);
+  g.closePath();
+  g.fill();
+
+  // Separate 1/2-circle head with bob.
+  const hx = swayX * 0.28;
+  const hy = -14 + headBob;
+  g.beginPath();
+  g.arc(hx, hy, 9.2, Math.PI, 0);
+  g.lineTo(hx + 9.2, hy);
+  g.lineTo(hx - 9.2, hy);
+  g.closePath();
+  g.fill();
+
+  // Step 3: clean outside arms.
+  g.beginPath();
+  g.moveTo(-27 + swayX, -17);
+  g.lineTo(-41 + swayX, -17);
+  g.lineTo(-38 + swayX, 11);
+  g.lineTo(-27 + swayX, 19);
+  g.closePath();
+  g.fill();
+  g.beginPath();
+  g.arc(-28 + swayX, -21, 5.3, 0, Math.PI * 2);
+  g.fill();
+
+  g.beginPath();
+  g.moveTo(27 + swayX, -17);
+  g.lineTo(41 + swayX, -17);
+  g.lineTo(38 + swayX, 11);
+  g.lineTo(27 + swayX, 19);
+  g.closePath();
+  g.fill();
+  g.beginPath();
+  g.arc(28 + swayX, -21, 5.3, 0, Math.PI * 2);
+  g.fill();
+
+  // Built-in right punchbeamer ports.
+  g.fillStyle = BG;
+  g.beginPath();
+  g.arc(39 + swayX, -4, 4.8, 0, Math.PI * 2);
+  g.arc(39 + swayX, 6, 4.8, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = INK;
+  g.beginPath();
+  g.arc(39 + swayX, -4, 3.3, 0, Math.PI * 2);
+  g.arc(39 + swayX, 6, 3.3, 0, Math.PI * 2);
+  g.fill();
+
+  drawRigMarks(g, p);
+
+  // Left arm mount can swap.
+  if (p.weapons.left){
+    const heatL = p.chaingun?.left?.heat ?? 0;
+    g.save();
+    g.scale(0.76, 0.76);
+    drawWeapon(g, (-mountX - 11 + swayX) / 0.76, (mountY + 1) / 0.76, 'left', p.weapons.left, heatL);
+    g.restore();
+  }
+
+  g.restore();
+}
 
 function drawRigMarks(g, p){
   const marks = p.rigMarks;

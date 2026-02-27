@@ -5,6 +5,7 @@ import { Theme } from './theme.js';
 const shots = [];
 const beams = [];
 const beamResolvers = [];
+const punchBeamResolvers = [];
 
 function closestPointOnSegment(px, py, x1, y1, x2, y2){
   const vx = x2 - x1;
@@ -73,12 +74,47 @@ function makeBeamPayload(b, dt){
       if (radial > coreRadius){
         const rr = (radial - coreRadius) / Math.max(1e-6, edge - coreRadius);
         const edgeFade = 1 - Math.min(1, Math.max(0, rr));
-        if (b.type === 'punchbeamer'){
-          // Keep punchbeamer edge hits reliable to match its thick visual arcs.
-          radialMul = 0.65 + edgeFade * 0.35;
-        } else {
-          radialMul = edgeFade * (0.3 + Math.random() * 0.7);
-        }
+        radialMul = edgeFade * (0.3 + Math.random() * 0.7);
+      }
+
+      return Math.max(0, b.damage * tickScale * distMul * closeMul * radialMul);
+    }
+  };
+}
+
+function makePunchBeamPayload(b, dt){
+  const tickScale = dt / Math.max(0.001, b.life);
+  const nearFrac = Math.max(0.05, Math.min(0.85, b.nearFrac ?? 0.25));
+  const hitRangeFrac = Math.max(0.05, Math.min(1, b.hitRangeFrac ?? 1));
+  const farDamageMul = Math.max(0, Math.min(1, b.farDamageMul ?? 0.15));
+  const closeBoostFrac = Math.max(0.02, Math.min(nearFrac, b.closeBoostFrac ?? 0.16));
+  const closeBoostMul = Math.max(1, b.closeBoostMul ?? 2.8);
+  const coreRadius = Math.max(0, b.coreRadius ?? 6);
+  const lightningRadius = Math.max(1, b.lightningRadius ?? 30);
+
+  return {
+    x1: b.x1, y1: b.y1, x2: b.x2, y2: b.y2,
+    damage: b.damage,
+    type: b.type || 'punchbeamer',
+    damageAt(px, py, targetRadius = 0){
+      const hit = closestPointOnSegment(px, py, b.x1, b.y1, b.x2, b.y2);
+      if (hit.u > hitRangeFrac) return 0;
+      const radial = Math.max(0, Math.sqrt(hit.distSq) - Math.max(0, targetRadius));
+      const fan = lightningRadius * (0.16 + 0.84 * hit.u);
+      const edge = coreRadius + fan;
+      if (radial > edge) return 0;
+
+      const falloffT = hit.u <= nearFrac ? 0 : (hit.u - nearFrac) / Math.max(1e-6, 1 - nearFrac);
+      const distMul = 1 - (1 - farDamageMul) * Math.min(1, Math.max(0, falloffT));
+      const closeT = Math.min(1, hit.u / closeBoostFrac);
+      const closeMul = closeBoostMul - (closeBoostMul - 1) * closeT;
+
+      let radialMul = 1;
+      if (radial > coreRadius){
+        const rr = (radial - coreRadius) / Math.max(1e-6, edge - coreRadius);
+        const edgeFade = 1 - Math.min(1, Math.max(0, rr));
+        // Keep punchbeamer edge hits deterministic and reliable.
+        radialMul = 0.65 + edgeFade * 0.35;
       }
 
       return Math.max(0, b.damage * tickScale * distMul * closeMul * radialMul);
@@ -111,6 +147,11 @@ export function spawn(x, y, angle, type='rifle', mods={}){
 export function registerBeamResolver(fn){
   if (typeof fn !== 'function') return;
   beamResolvers.push(fn);
+}
+
+export function registerPunchBeamResolver(fn){
+  if (typeof fn !== 'function') return;
+  punchBeamResolvers.push(fn);
 }
 
 export function fireBeam(x, y, angle, mods = {}){
@@ -194,8 +235,10 @@ export function update(dt){
     updateTrackedBeam(b);
     const tick = Math.min(dt, Math.max(0, b.life - b.t));
     if (tick > 0){
-      const payload = makeBeamPayload(b, tick);
-      for (const resolve of beamResolvers){
+      const isPunchBeam = b.type === 'punchbeamer';
+      const payload = isPunchBeam ? makePunchBeamPayload(b, tick) : makeBeamPayload(b, tick);
+      const resolvers = isPunchBeam ? punchBeamResolvers : beamResolvers;
+      for (const resolve of resolvers){
         try {
           resolve(payload);
         } catch {}
@@ -238,5 +281,15 @@ export function draw(g){
   }
 }
 
-export const Projectiles = { spawn, fireBeam, registerBeamResolver, reset, update, draw, consumeHitsCircle, forEachHitsCircle };
+export const Projectiles = {
+  spawn,
+  fireBeam,
+  registerBeamResolver,
+  registerPunchBeamResolver,
+  reset,
+  update,
+  draw,
+  consumeHitsCircle,
+  forEachHitsCircle
+};
 

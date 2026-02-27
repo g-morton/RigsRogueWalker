@@ -332,7 +332,7 @@ function distPointToSegmentSq(px, py, x1, y1, x2, y2){
   return (px-bx)*(px-bx) + (py-by)*(py-by);
 }
 
-Projectiles.registerBeamResolver?.((beam)=>{
+function resolveBeamBossHits(beam){
   for (let i = bosses.length - 1; i >= 0; i--){
     const b = bosses[i];
     const hitR = bossHitRadius(b);
@@ -344,7 +344,10 @@ Projectiles.registerBeamResolver?.((beam)=>{
     }
     if (destroyBossAt(i)) continue;
   }
-});
+}
+
+Projectiles.registerBeamResolver?.(resolveBeamBossHits);
+Projectiles.registerPunchBeamResolver?.(resolveBeamBossHits);
 
 export function reset(){
   bosses.length = 0;

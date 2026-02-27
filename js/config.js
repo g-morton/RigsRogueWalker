@@ -84,7 +84,7 @@ export const CONFIG = {
       closeBoostFrac: 0.25, closeBoostMul: 2.8
     },
     punchbeamer: {
-      range: 260, life: 0.38, damage: 100, jitter: 18, arcs: 4,
+      range: 320, life: 0.38, damage: 100, jitter: 18, arcs: 4,
       coreRadius: 14, lightningRadius: 52,
       nearFrac: 0.28, hitRangeFrac: 0.28, farDamageMul: 1.00,
       closeBoostFrac: 0.28, closeBoostMul: 5.0
