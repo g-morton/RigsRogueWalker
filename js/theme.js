@@ -60,6 +60,7 @@ export const Theme = {
     g.fillStyle = INK;
     g.fillRect(headX, headY, P.HEAD, P.HEAD);
 
+    drawTalonShield(g, p);
     drawRigMarks(g, p);
 
     // weapon mounts
@@ -503,8 +504,9 @@ export const Theme = {
   },
 
   drawEnemyBullet(g, s){
-    g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI*2);
-    g.fillStyle = BLUE; g.fill();
+    const r = (s.r ?? 0) * 1.18;
+    g.beginPath(); g.arc(s.x, s.y, r, 0, Math.PI*2);
+    g.fillStyle = '#d01818'; g.fill();
     g.lineWidth = 2; g.strokeStyle = BG; g.stroke();
   },
 
@@ -998,6 +1000,23 @@ function drawRigMarks(g, p){
   }
 }
 
+function drawTalonShield(g, p){
+  const sh = p.shield;
+  if (!sh?.enabled || !sh.active || sh.hp <= 0) return;
+  const ratio = Math.max(0, Math.min(1, sh.hp / Math.max(1, sh.max)));
+  const inkAlpha = 0.78 + ratio * 0.22;
+  g.save();
+  g.globalAlpha = inkAlpha;
+  g.strokeStyle = INK;
+  g.lineWidth = 6.0;
+  g.lineCap = 'butt';
+  g.beginPath();
+  g.moveTo(-18.5, -21.8);
+  g.bezierCurveTo(14.0, -28.4, 37.0, -19.8, 49.0, -1.6);
+  g.stroke();
+  g.restore();
+}
+
 function drawRigProtrusion(g, m){
   const ox = m.ox ?? 0;
   const oy = m.oy ?? 0;
@@ -1027,6 +1046,42 @@ function drawRigProtrusion(g, m){
     g.fill();
     g.lineWidth = 0.9;
     g.stroke();
+  } else if (m.kind === 'dish_mast'){
+    const stemW = 2.0 * size;
+    const stemH = 9.4 * size;
+    g.fillRect(-stemW * 0.5, -stemH * 0.5 + 1.1 * size, stemW, stemH);
+    g.beginPath();
+    g.arc(0, -4.35 * size, 3.05 * size, 0, Math.PI, true);
+    g.closePath();
+    g.fill();
+    g.fillRect(-0.55 * size, -6.45 * size, 1.1 * size, 0.95 * size);
+  } else if (m.kind === 'bridge_clamp'){
+    const w = 7.0 * size;
+    const h = 5.8 * size;
+    g.fillRect(-w * 0.5, -h * 0.48, w, h * 0.24);
+    g.fillRect(-w * 0.5, -h * 0.24, w * 0.22, h);
+    g.fillRect(w * 0.28, -h * 0.24, w * 0.22, h);
+    g.fillRect(-2.2 * size, -h * 0.62, 4.4 * size, 1.1 * size);
+    g.strokeStyle = BG;
+    g.lineWidth = 0.95;
+    g.strokeRect(-2.0 * size, -h * 0.52, 4.0 * size, 0.95 * size);
+  } else if (m.kind === 'ring_fork'){
+    g.fillRect(-1.9 * size, 1.7 * size, 3.8 * size, 1.8 * size);
+    g.fillRect(-1.15 * size, -4.3 * size, 1.0 * size, 2.75 * size);
+    g.fillRect(0.15 * size, -4.3 * size, 1.0 * size, 2.75 * size);
+    g.lineWidth = 1.0 + size * 0.36;
+    g.beginPath();
+    g.arc(0, -0.4 * size, 2.2 * size, 0, Math.PI * 2);
+    g.stroke();
+    g.strokeStyle = BG;
+    g.lineWidth = 0.9;
+    g.beginPath();
+    g.arc(0, -0.4 * size, 1.45 * size, 0, Math.PI * 2);
+    g.stroke();
+  } else if (m.kind === 'y_post'){
+    g.fillRect(-1.0 * size, -4.9 * size, 2.0 * size, 10.1 * size);
+    g.fillRect(-2.2 * size, -6.0 * size, 1.6 * size, 2.0 * size);
+    g.fillRect(0.6 * size, -6.0 * size, 1.6 * size, 2.0 * size);
   } else if (m.kind === 'u_shroud'){
     const w = 7.8 * size, h = 5.9 * size;
     g.fillRect(-w * 0.5, -h * 0.5, w, h * 0.34);
@@ -1092,6 +1147,84 @@ function drawRigProtrusion(g, m){
     g.beginPath();
     g.arc(0, 0, 1.55 * size, 0, Math.PI * 2);
     g.fill();
+  } else if (m.kind === 'bucket_grip'){
+    const topW = 6.9 * size;
+    const topH = 2.0 * size;
+    const bodyH = 6.0 * size;
+    g.fillRect(-topW * 0.5, -4.9 * size, topW, topH);
+    g.beginPath();
+    g.moveTo(-topW * 0.5, -2.9 * size);
+    g.lineTo(topW * 0.5, -2.9 * size);
+    g.lineTo(2.2 * size, bodyH * 0.5);
+    g.lineTo(-2.2 * size, bodyH * 0.5);
+    g.closePath();
+    g.fill();
+    g.fillRect(-1.95 * size, bodyH * 0.5, 0.95 * size, 1.5 * size);
+    g.fillRect(-0.48 * size, bodyH * 0.5, 0.95 * size, 1.5 * size);
+    g.fillRect(0.99 * size, bodyH * 0.5, 0.95 * size, 1.5 * size);
+    g.strokeStyle = BG;
+    g.lineWidth = 0.95;
+    g.strokeRect(-2.25 * size, -4.0 * size, 4.5 * size, 1.6 * size);
+  } else if (m.kind === 'side_capsule_port'){
+    const w = 8.0 * size;
+    const h = 5.2 * size;
+    g.fillRect(-w * 0.30, -h * 0.5, w * 0.60, h);
+    g.beginPath();
+    g.arc(-w * 0.30, 0, h * 0.5, Math.PI * 0.5, Math.PI * 1.5);
+    g.arc(w * 0.30, 0, h * 0.5, -Math.PI * 0.5, Math.PI * 0.5);
+    g.closePath();
+    g.fill();
+    g.lineWidth = 1.0 + size * 0.40;
+    g.beginPath();
+    g.arc(-2.0 * size, 0, 1.45 * size, 0, Math.PI * 2);
+    g.stroke();
+    g.strokeStyle = BG;
+    g.lineWidth = 0.85;
+    g.beginPath();
+    g.arc(-2.0 * size, 0, 0.85 * size, 0, Math.PI * 2);
+    g.stroke();
+  } else if (m.kind === 'spine_block'){
+    const w = 4.6 * size;
+    const h = 8.6 * size;
+    const r = 1.3 * size;
+    g.beginPath();
+    g.moveTo(-w * 0.5 + r, -h * 0.5);
+    g.lineTo(w * 0.5 - r, -h * 0.5);
+    g.quadraticCurveTo(w * 0.5, -h * 0.5, w * 0.5, -h * 0.5 + r);
+    g.lineTo(w * 0.5, h * 0.5 - r);
+    g.quadraticCurveTo(w * 0.5, h * 0.5, w * 0.5 - r, h * 0.5);
+    g.lineTo(-w * 0.5 + r, h * 0.5);
+    g.quadraticCurveTo(-w * 0.5, h * 0.5, -w * 0.5, h * 0.5 - r);
+    g.lineTo(-w * 0.5, -h * 0.5 + r);
+    g.quadraticCurveTo(-w * 0.5, -h * 0.5, -w * 0.5 + r, -h * 0.5);
+    g.closePath();
+    g.fill();
+    g.fillRect(-w * 0.83, -3.2 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(w * 0.53, -3.2 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(-w * 0.83, -1.0 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(w * 0.53, -1.0 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(-w * 0.83, 1.2 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(w * 0.53, 1.2 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(-w * 0.83, 3.4 * size, 1.3 * size, 1.0 * size);
+    g.fillRect(w * 0.53, 3.4 * size, 1.3 * size, 1.0 * size);
+  } else if (m.kind === 'chamfer_plate'){
+    const w = 6.0 * size;
+    const h = 4.6 * size;
+    g.beginPath();
+    g.moveTo(-w * 0.5, -h * 0.5);
+    g.lineTo(w * 0.5, -h * 0.5);
+    g.lineTo(w * 0.5, h * 0.5);
+    g.lineTo(-w * 0.05, h * 0.5);
+    g.lineTo(-w * 0.5, h * 0.05);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = BG;
+    g.fillStyle = BG;
+    g.beginPath();
+    g.arc(w * 0.26, -h * 0.24, 0.52 * size, 0, Math.PI * 2);
+    g.arc(w * 0.26, h * 0.24, 0.52 * size, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = INK;
   } else {
     // pointed_mag
     const w = 3.4 * size, h = 6.7 * size;
@@ -1173,11 +1306,11 @@ function drawWeapon(g, ax, ay, side, type, heat = 0){
       break;
     }
     case 'chaingun':
-      g.fillRect(-2, -39, 12, 46);  // tall column
-      g.fillRect(2, -42, 4, 6);    // tiny top nub
-      g.fillRect(-4, 8, 18, 26);   // lower mass
-      g.fillRect(4, 18, 18, 22);    // forward/right block
-      g.fillRect(8, 40, 8, 4);    // little foot
+      g.fillRect(-2, -31, 12, 37);  // shorter column than chaincannon
+      g.fillRect(2, -35, 4, 5);    // compact top nub
+      g.fillRect(-4, 7, 17, 21);   // lower mass
+      g.fillRect(4, 15, 15, 16);   // forward/right block
+      g.fillRect(8, 31, 7, 3);     // little foot
       break;
     case 'chaincannon':
       g.fillRect(-3, -35, 14, 40);

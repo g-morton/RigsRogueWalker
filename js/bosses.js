@@ -488,7 +488,7 @@ export function update(dt){
       const dx = s.x - px, dy = s.y - py;
       if (dx*dx + dy*dy <= pr*pr){
         const damage = Math.max(1, s.damage ?? 1);
-        world.player.hp = Math.max(0, (world.player.hp ?? world.player.maxHp ?? 1) - damage);
+        world.player.takeDamage?.(damage);
         Particles.spawnImpact(s.x, s.y, 'damage', damage / 12);
         SFX.playHit?.(damage);
         shots.splice(i, 1);

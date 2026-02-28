@@ -215,7 +215,7 @@ export function update(dt){
     if (world.player && !world.player.dead && overlapsPlayer(t, world.player)){
       const typeDef = getTurretTypeDef(t.type);
       const collisionDamage = Math.max(3, Math.round((typeDef.bulletDamage ?? 8) * 0.8));
-      world.player.hp = Math.max(0, (world.player.hp ?? world.player.maxHp ?? 1) - collisionDamage);
+      world.player.takeDamage?.(collisionDamage);
       Particles.spawnImpact(t.x, t.y, 'damage', Math.max(0.45, collisionDamage / 10));
       Particles.spawnImpact(t.x, t.y, 'explosion', t.maxHp / 16);
       SFX.playHit?.(collisionDamage);
@@ -279,7 +279,7 @@ export function update(dt){
       const dx = s.x - px, dy = s.y - py;
       if (dx*dx + dy*dy <= pr*pr){
         const damage = Math.max(1, s.damage ?? 1);
-        world.player.hp = Math.max(0, (world.player.hp ?? world.player.maxHp ?? 1) - damage);
+        world.player.takeDamage?.(damage);
         Particles.spawnImpact(s.x, s.y, 'damage');
         SFX.playHit?.(damage);
         shots.splice(i, 1);

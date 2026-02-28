@@ -71,6 +71,16 @@ export class Player{
     this.hp = this.maxHp;
     this.lastHp = this.hp;
     this.damageBucket = 0;
+    const shieldEnabled = !!opts.shield;
+    const shieldMax = Math.max(1, opts.shieldMax ?? 50);
+    this.shield = {
+      enabled: shieldEnabled,
+      active: shieldEnabled,
+      max: shieldMax,
+      hp: shieldEnabled ? shieldMax : 0,
+      regenNeed: Math.max(1, opts.shieldRegenNeed ?? 50),
+      regenCharge: 0
+    };
     this.rigMarks = [];
     this.fxSparkT = 0;
     this.fxSmokeT = 0;
@@ -177,8 +187,69 @@ export class Player{
   grantWeaponFromPickup(side, type){
     this.setWeapon(side, type);
     const maxHp = Math.max(1, this.maxHp ?? 1);
-    this.hp = Math.min(maxHp, (this.hp ?? maxHp) + maxHp * 0.25);
+    this.heal(maxHp * 0.25);
+  }
+
+  takeDamage(amount){
+    let dmg = Math.max(0, amount ?? 0);
+    if (dmg <= 0 || this.dead) return { absorbed: 0, hpDamage: 0, shieldBroken: false };
+    let absorbed = 0;
+    let shieldBroken = false;
+    const sh = this.shield;
+    if (sh?.enabled && sh.active && sh.hp > 0){
+      absorbed = Math.min(sh.hp, dmg);
+      sh.hp -= absorbed;
+      dmg -= absorbed;
+      if (sh.hp <= 0){
+        sh.hp = 0;
+        sh.active = false;
+        sh.regenCharge = 0;
+        shieldBroken = true;
+      }
+    }
+    if (dmg > 0){
+      const maxHp = Math.max(1, this.maxHp ?? 1);
+      this.hp = Math.max(0, (this.hp ?? maxHp) - dmg);
+      this.lastHp = Math.max(0, this.hp ?? maxHp);
+    }
+    return { absorbed, hpDamage: dmg, shieldBroken };
+  }
+
+  heal(amount){
+    const heal = Math.max(0, amount ?? 0);
+    if (heal <= 0 || this.dead) return { healed: 0, overflow: 0, shieldRegenerated: false };
+    const maxHp = Math.max(1, this.maxHp ?? 1);
+    const curHp = Math.max(0, this.hp ?? maxHp);
+    const healed = Math.min(heal, Math.max(0, maxHp - curHp));
+    const overflow = Math.max(0, heal - healed);
+    this.hp = curHp + healed;
     this.lastHp = Math.max(0, this.hp ?? maxHp);
+
+    let shieldRegenerated = false;
+    const sh = this.shield;
+    if (overflow > 0 && sh?.enabled && !sh.active){
+      sh.regenCharge += overflow;
+      if (sh.regenCharge >= sh.regenNeed){
+        sh.active = true;
+        sh.hp = sh.max;
+        sh.regenCharge = 0;
+        shieldRegenerated = true;
+      }
+    }
+    return { healed, overflow, shieldRegenerated };
+  }
+
+  restoreFullIntegrity(){
+    const maxHp = Math.max(1, this.maxHp ?? 1);
+    this.hp = maxHp;
+    this.lastHp = maxHp;
+    this.damageBucket = 0;
+    const sh = this.shield;
+    if (sh?.enabled){
+      sh.active = true;
+      sh.hp = sh.max;
+      sh.regenCharge = 0;
+    }
   }
 
   addMediumRigMark(){
@@ -201,7 +272,13 @@ export class Player{
       }
       return entries[entries.length - 1].k;
     };
-    const forwardKinds = [{ k:'mast_orb', w:1 }];
+    const forwardKinds = [
+      { k:'mast_orb', w:1.00 },
+      { k:'dish_mast', w:0.92 },
+      { k:'bridge_clamp', w:0.90 },
+      { k:'ring_fork', w:0.84 },
+      { k:'y_post', w:0.88 }
+    ];
     const rearKinds = [
       { k:'pointed_mag', w:1.35 },
       { k:'capsule_cell', w:1.25 },
@@ -210,7 +287,11 @@ export class Player{
       { k:'ribbed_pack', w:0.95 },
       { k:'node_spine', w:0.85 },
       { k:'orbital_pod', w:0.78 },
-      { k:'ring_port', w:0.55 }
+      { k:'ring_port', w:0.55 },
+      { k:'bucket_grip', w:0.76 },
+      { k:'side_capsule_port', w:0.80 },
+      { k:'spine_block', w:0.72 },
+      { k:'chamfer_plate', w:0.70 }
     ];
     const chooseForward = Math.random() < 0.22;
     const pool = chooseForward ? forwardKinds : rearKinds;

@@ -33,15 +33,41 @@ const SIDE_WEAPON_DROPS = [
   { key:'R-Ca', type:'weapon', side:'right', weapon:'cannon'   }
 ];
 const MINOR_REPAIR = {
-  key: 'HP+',
+  key: 'Hp',
   type: 'repair',
   healFrac: CONFIG.POWERUPS.MINOR_REPAIR_HEAL_FRAC ?? 0.15
 };
 const MEDIUM_REPAIR = {
-  key: 'HP++',
+  key: 'Hp+',
   type: 'repair',
   healFrac: CONFIG.POWERUPS.MEDIUM_REPAIR_HEAL_FRAC ?? 0.30
 };
+const ESTELLE_MEDIUM_REPAIR = {
+  key: 'Hp+',
+  type: 'repair',
+  healFrac: CONFIG.POWERUPS.ESTELLE_MEDIUM_REPAIR_HEAL_FRAC ?? 0.45
+};
+const BOT_UPGRADES = [
+  { key: 'SPD+', type: 'bot', stat: 'speed', add: 0.12, max: 2.4, w: 1.0 },
+  { key: 'DMG+', type: 'bot', stat: 'damage', mul: 1.12, max: 3.0, w: 1.0 },
+  { key: 'RLD+', type: 'bot', stat: 'reload', mul: 0.92, min: 0.45, w: 0.95 },
+  { key: 'PRJ+', type: 'bot', stat: 'projectile', mul: 1.10, max: 2.6, w: 0.90 }
+];
+
+function weightedPick(entries){
+  let total = 0;
+  for (const e of entries) total += Math.max(0, e.w ?? 1);
+  let r = Math.random() * Math.max(1, total);
+  for (const e of entries){
+    r -= Math.max(0, e.w ?? 1);
+    if (r <= 0) return e;
+  }
+  return entries[entries.length - 1];
+}
+
+function chooseBotUpgrade(){
+  return weightedPick(BOT_UPGRADES);
+}
 
 function chooseWeaponDrop(){
   const allowed = Array.isArray(world.allowedWeaponDrops) ? world.allowedWeaponDrops : null;
@@ -57,7 +83,10 @@ function chooseWeaponDrop(){
 
 function chooseDropFromTurretType(type){
   if (type === 'small') return MINOR_REPAIR;
-  if (type === 'medium') return MEDIUM_REPAIR;
+  if (type === 'medium'){
+    if (world.chassisKey === 'estelle') return ESTELLE_MEDIUM_REPAIR;
+    return chooseBotUpgrade();
+  }
   if (type === 'large') return chooseWeaponDrop();
   return null;
 }
@@ -75,10 +104,12 @@ export function spawnFromTurret(x, y, type){
 function chooseBossDrop(hpFactor){
   // Higher HP bosses skew toward weapon drops.
   const weaponChance = Math.min(0.72, 0.24 + hpFactor * 0.36);
-  const mediumRepairChance = Math.max(0.12, 0.30 - hpFactor * 0.12);
+  const botChance = Math.min(0.34, 0.18 + hpFactor * 0.10);
+  const mediumRepairChance = Math.max(0.10, 0.28 - hpFactor * 0.10);
   const r = Math.random();
   if (r < weaponChance) return chooseWeaponDrop();
-  if (r < weaponChance + mediumRepairChance) return MEDIUM_REPAIR;
+  if (r < weaponChance + botChance) return chooseBotUpgrade();
+  if (r < weaponChance + botChance + mediumRepairChance) return MEDIUM_REPAIR;
   return MINOR_REPAIR;
 }
 
@@ -90,6 +121,7 @@ export function spawnBossBurst(x, y, maxHp = 260){
   // Guarantee at least one repair and one weapon from larger bosses.
   const guaranteed = [];
   if (count >= 4) guaranteed.push(MEDIUM_REPAIR);
+  if (count >= 6) guaranteed.push(chooseBotUpgrade());
   if (count >= 5) guaranteed.push(chooseWeaponDrop());
 
   for (let i = 0; i < count; i++){
@@ -152,7 +184,26 @@ function apply(def, p){
   } else if (def.type === 'repair'){
     const maxHp = Math.max(1, p.maxHp ?? 1);
     const heal = maxHp * (def.healFrac ?? 0.35);
-    p.hp = Math.min(maxHp, (p.hp ?? maxHp) + heal);
+    p.heal?.(heal);
+  } else if (def.type === 'bot'){
+    if (def.stat === 'speed'){
+      const add = def.add ?? 0.1;
+      const max = def.max ?? 2.0;
+      p.speedMul = Math.min(max, (p.speedMul ?? 1) + add);
+    } else if (def.stat === 'damage'){
+      const mul = def.mul ?? 1.1;
+      const max = def.max ?? 2.5;
+      p.damageMul = Math.min(max, (p.damageMul ?? 1) * mul);
+    } else if (def.stat === 'reload'){
+      const mul = def.mul ?? 0.92;
+      const min = def.min ?? 0.45;
+      p.reloadMul = Math.max(min, (p.reloadMul ?? 1) * mul);
+    } else if (def.stat === 'projectile'){
+      const mul = def.mul ?? 1.08;
+      const max = def.max ?? 2.3;
+      p.projSpeedMul = Math.min(max, (p.projSpeedMul ?? 1) * mul);
+    }
+    p.addMediumRigMark?.();
   }
 }
 

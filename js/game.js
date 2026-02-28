@@ -38,6 +38,9 @@ const CHASSIS_PRESETS = {
   talon: {
     hp: 150,
     speedMul: 0.94,
+    shield: true,
+    shieldMax: 50,
+    shieldRegenNeed: 50,
     weapons: { left: 'shotgun', right: 'rifle' },
     allowedWeapons: ['rifle', 'longrifle', 'shotgun', 'heavyshotgun','chaingun'],
     allowedMounts: ['left', 'right']
@@ -105,10 +108,7 @@ function handleDebugHotkey(e){
   if (key === 'g'){
     godMode = !godMode;
     if (godMode && world.player && !world.player.dead){
-      const maxHp = Math.max(1, world.player.maxHp ?? 1);
-      world.player.hp = maxHp;
-      world.player.lastHp = maxHp;
-      world.player.damageBucket = 0;
+      world.player.restoreFullIntegrity?.();
     }
     syncGodModeUI();
     e.preventDefault();
@@ -230,10 +230,7 @@ function startRAF(){
     if (bossPhase === 'fight' && boss) HUD.setBossBar?.(boss.hp, boss.maxHp);
     else HUD.setBossBar?.(0, 1);
     if (godMode && player && !player.dead){
-      const maxHp = Math.max(1, player.maxHp ?? 1);
-      player.hp = maxHp;
-      player.lastHp = maxHp;
-      player.damageBucket = 0;
+      player.restoreFullIntegrity?.();
     }
     player.update(dt);
     if (!godMode && !player.dead && player.hp <= 0){
